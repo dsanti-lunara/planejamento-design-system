@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Nova publicação" description="Rota /admin/publicacoes/nova — escolha (Publicar novo produto / Atualizar produto existente) seguida de uma jornada única em página só (sem wizard horizontal). Destino único é Produção; sem aprovação." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0;position:relative">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0;padding-bottom:0">
+
+<div style="width:100%;max-width:720px;margin:0 auto;padding:24px 28px 0;box-sizing:border-box">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="300px,24px"></x-import>
+</div>
+
+<div style="width:100%;max-width:720px;margin:0 auto;padding:16px 28px 0;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-family:var(--font-sans);font-size:22px;font-weight:700;color:var(--color-text-primary)">{{ pageTitle }}</h1>
+<p style="margin:0;font-family:var(--font-sans);font-size:13px;color:var(--color-text-secondary)">{{ pageSubtitle }}</p>
+</div>
+
+<sc-if value="{{ showChooser }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;max-width:720px;margin:0 auto;padding:20px 28px 100px;box-sizing:border-box;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div onclick="{{ chooseNovo }}" style="cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:14px;background:var(--color-surface-card);box-shadow:inset 0 0 0 1px var(--color-border-subtle);box-sizing:border-box" style-hover="box-shadow:inset 0 0 0 1px var(--color-border-emphasis)">
+<span style="font-family:var(--font-sans);font-size:16px;font-weight:700;color:var(--color-text-primary)">Publicar novo produto</span>
+<span style="font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--color-text-secondary)">Cadastre e disponibilize um novo relatório ou projeto no Nexo.</span>
+</div>
+<div onclick="{{ chooseAtualizacao }}" style="cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:14px;background:var(--color-surface-card);box-shadow:inset 0 0 0 1px var(--color-border-subtle);box-sizing:border-box" style-hover="box-shadow:inset 0 0 0 1px var(--color-border-emphasis)">
+<span style="font-family:var(--font-sans);font-size:16px;font-weight:700;color:var(--color-text-primary)">Atualizar produto existente</span>
+<span style="font-family:var(--font-sans);font-size:13px;line-height:1.5;color:var(--color-text-secondary)">Publique uma nova versão ou altere a configuração de um produto existente.</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showFlow }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:20px;padding:20px 28px 100px;align-items:stretch;box-sizing:border-box;width:100%;max-width:720px;margin:0 auto;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Produto" description="{{ produtoDescription }}" contentSlot="{{ produtoSlot }}" style="width:100%" hint-size="100%,140px"></x-import>
+
+<sc-if value="{{ showTipoSection }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Tipo de conteúdo" description="{{ tipoDescription }}" contentSlot="{{ tipoSlot }}" style="width:100%" hint-size="100%,100px"></x-import>
+</sc-if>
+
+<sc-if value="{{ showConfigSection }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Configuração" description="{{ configDescription }}" contentSlot="{{ configSlot }}" style="width:100%" hint-size="100%,160px"></x-import>
+</sc-if>
+
+<sc-if value="{{ showValidationSection }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Validação" description="Verificações automáticas antes da publicação." contentSlot="{{ validationSlot }}" style="width:100%" hint-size="100%,200px"></x-import>
+</sc-if>
+
+<sc-if value="{{ showAcessoSection }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Acesso inicial" description="Defina quando o produto passa a ficar executável para usuários comuns." contentSlot="{{ acessoSlot }}" style="width:100%" hint-size="100%,140px"></x-import>
+</sc-if>
+
+<sc-if value="{{ showSummarySection }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Resumo" description="Revise os dados antes de publicar no Nexo." contentSlot="{{ summarySlot }}" style="width:100%" hint-size="100%,200px"></x-import>
+</sc-if>
+
+</div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{ showFlow }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:flex-end;gap:10px;padding:16px 28px;box-sizing:border-box;background:var(--color-surface-card);box-shadow:inset 0 1px 0 var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ goList }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ publishLabel }}" style2="primary" state="{{ publishState }}" onClick="{{ handlePublish }}" hint-size="140px,40px"></x-import>
+</div>
+</sc-if>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PRODUCT_TYPE = {
+  'Claro Brasil': 'Projeto Nexo', 'Banco de Horas': 'Projeto Nexo', 'Governança de Dados': 'Projeto Nexo', 'Loja Digital': 'Projeto Nexo',
+  'Painel de Clientes': 'Power BI', 'Painel Financeiro': 'Power BI',
+};
+const HAS_PUBLICATION = { 'Claro Brasil': true, 'Banco de Horas': true, 'Governança de Dados': true, 'Loja Digital': true, 'Painel de Clientes': true, 'Painel Financeiro': true };
+const ALL_PRODUCTS = ['Claro Brasil', 'Painel de Clientes', 'Banco de Horas', 'Governança de Dados', 'Painel Financeiro', 'Loja Digital'];
+const CURRENT_VERSION = { 'Claro Brasil': 'v1.4.0', 'Banco de Horas': 'v1.0.3', 'Governança de Dados': 'v3.0.0', 'Loja Digital': 'v2.0.1' };
+const CATEGORY_LABELS = ['Operacional', 'Planejamento', 'Financeiro', 'Gestão', 'Clientes', 'Dados & Inteligência'];
+const CATALOG_META = { 'Claro Brasil': 'Operacional', 'Painel de Clientes': 'Clientes', 'Banco de Horas': 'Gestão', 'Governança de Dados': 'Dados & Inteligência', 'Painel Financeiro': 'Financeiro', 'Loja Digital': 'Operacional' };
+const PBI_CURRENT = {
+  'Painel de Clientes': { link: 'https://app.powerbi.com/groups/xxx/reports/painel-clientes', reportName: 'Painel de Clientes', homePage: 'Visão Geral' },
+  'Painel Financeiro': { link: 'https://app.powerbi.com/groups/xxx/reports/painel-financeiro', reportName: 'Painel Financeiro', homePage: 'Resumo Mensal' },
+};
+const WORKSPACE_NAME = 'Planejamento Analytics';
+const HOME_PAGE_OPTIONS = ['Visão Geral', 'Resumo Mensal', 'Indicadores', 'Detalhamento'];
+
+function nextVersion(current) {
+  if (!current) return 'v1.0.0';
+  const m = current.match(/v(\d+)\.(\d+)\.(\d+)/);
+  if (!m) return 'v1.0.0';
+  return 'v' + m[1] + '.' + (parseInt(m[2], 10) + 1) + '.0';
+}
+
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    flow: null, isNewProduct: false,
+    name: '', description: '', category: '', tags: [],
+    contentType: '',
+    file: null, fileVersion: '', fileSize: '',
+    link: '', reportName: '', homePage: '',
+    configurarAcesso: false,
+    selectedProduct: '', productLocked: false,
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  slugify(v) { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+
+  productIdToName(id) {
+    const map = { 'claro-brasil': 'Claro Brasil', 'painel-de-clientes': 'Painel de Clientes', 'banco-de-horas': 'Banco de Horas' };
+    return map[id] || '';
+  }
+  keyToProductName(key) {
+    const map = { 'claro-brasil': 'Claro Brasil', 'banco-horas': 'Banco de Horas', 'governanca-dados': 'Governança de Dados', 'loja-digital': 'Loja Digital', 'painel-clientes': 'Painel de Clientes', 'painel-financeiro': 'Painel Financeiro' };
+    return map[key] || '';
+  }
+
+  componentDidMount() {
+    const fromProductId = this.productIdToName(this.query('productId'));
+    if (fromProductId) {
+      this.setState({ flow: 'novo', isNewProduct: false, name: fromProductId, category: CATALOG_META[fromProductId] || '', contentType: PRODUCT_TYPE[fromProductId] || '' });
+      return;
+    }
+    if (this.query('mode') === 'atualizacao') {
+      const product = this.keyToProductName(this.query('key'));
+      if (product) {
+        const pbi = PBI_CURRENT[product];
+        this.setState({ flow: 'atualizacao', selectedProduct: product, productLocked: true, contentType: PRODUCT_TYPE[product] || '', link: pbi ? pbi.link : '', reportName: pbi ? pbi.reportName : '', homePage: pbi ? pbi.homePage : '' });
+      }
+    }
+  }
+
+  chooseNovo = () => this.setState({ flow: 'novo', isNewProduct: true, name: '', description: '', category: '', tags: [], contentType: '', file: null, fileVersion: '', fileSize: '', link: '', reportName: '', homePage: '', configurarAcesso: false });
+  chooseAtualizacao = () => this.setState({ flow: 'atualizacao', selectedProduct: '', productLocked: false, contentType: '', file: null, fileVersion: '', fileSize: '', link: '', reportName: '', homePage: '' });
+
+  setName = (e) => this.setState({ name: e.target.value });
+  setDescription = (e) => this.setState({ description: e.target.value });
+  setCategory = (v) => this.setState({ category: v });
+  setTags = (v) => this.setState({ tags: v });
+  setContentType = (v) => this.setState({ contentType: v, file: null, fileVersion: '', fileSize: '', link: '', reportName: '', homePage: '' });
+
+  setSelectedProduct = (v) => {
+    const pbi = PBI_CURRENT[v];
+    this.setState({ selectedProduct: v, contentType: PRODUCT_TYPE[v] || '', file: null, fileVersion: '', fileSize: '', link: pbi ? pbi.link : '', reportName: pbi ? pbi.reportName : '', homePage: pbi ? pbi.homePage : '' });
+  };
+
+  currentProductName() { return this.state.flow === 'atualizacao' ? this.state.selectedProduct : this.state.name; }
+
+  onFileSelected = (file) => {
+    if (!file) { this.setState({ file: null, fileVersion: '', fileSize: '' }); return; }
+    const nv = nextVersion(CURRENT_VERSION[this.currentProductName()]);
+    this.setState({ file, fileVersion: nv, fileSize: (8 + Math.round(Math.random() * 30) / 10) + ' MB' });
+  };
+  onLinkChange = (e) => {
+    const v = e.target.value;
+    if (v.trim().length > 12) this.setState({ link: v, reportName: this.currentProductName() || 'Relatório', homePage: this.state.homePage || HOME_PAGE_OPTIONS[0] });
+    else this.setState({ link: v, reportName: '', homePage: '' });
+  };
+  setHomePage = (v) => this.setState({ homePage: v });
+  setConfigurarAcesso = (v) => this.setState({ configurarAcesso: !!v });
+
+  canPublish() {
+    const s = this.state;
+    if (s.flow === 'novo') {
+      if (s.isNewProduct && (!s.name.trim() || !s.category)) return false;
+      if (!s.contentType) return false;
+      if (s.contentType === 'Projeto Nexo') return !!s.file;
+      if (s.contentType === 'Power BI') return !!s.reportName && !!s.homePage;
+      return false;
+    }
+    if (s.flow === 'atualizacao') {
+      if (!s.selectedProduct || !s.contentType) return false;
+      if (s.contentType === 'Projeto Nexo') return !!s.file;
+      if (s.contentType === 'Power BI') return !!s.link.trim();
+      return false;
+    }
+    return false;
+  }
+
+  handlePublish = () => {
+    if (!this.canPublish()) return;
+    if (this.state.flow === 'novo' && this.state.configurarAcesso) {
+      window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=regras&novaRegra=1&produto=' + encodeURIComponent(this.currentProductName());
+      return;
+    }
+    this.goList();
+  };
+
+  renderVals() {
+    const ns = this.ns();
+    const s = this.state;
+    const isPacote = s.contentType === 'Projeto Nexo';
+    const isPBI = s.contentType === 'Power BI';
+    const productName = this.currentProductName();
+
+    let produtoSlot = null;
+    if (s.flow === 'novo' && s.isNewProduct) {
+      produtoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' } },
+        React.createElement(ns.InputText, { label: 'Nome do produto', showLabel: true, required: true, value: s.name, onChange: this.setName, placeholder: 'Ex.: Painel de Clientes', style: { width: '100%' } }),
+        React.createElement(ns.InputTextarea, { label: 'Descrição', state: s.description ? 'filled' : 'empty', value: s.description, onChange: this.setDescription, maxLength: 240, style: { width: '100%' } }),
+        React.createElement('div', { style: { display: 'flex', gap: 16, flexWrap: 'wrap' } },
+          React.createElement(ns.Field, { type: 'select', label: 'Categoria', required: true, options: CATEGORY_LABELS, text3: s.category || 'Selecionar categoria', onChange: this.setCategory, style: { flex: '1 1 220px' } }),
+          React.createElement(ns.InputTagInput, { label: 'Tags', tags: s.tags, onChange: this.setTags, placeholder: 'Adicionar tag e pressionar Enter', style: { flex: '1 1 220px' } })),
+        React.createElement(ns.FormSlugField, { prefix: '/produtos/', value: this.slugify(s.name), onChange: this.noop, state: 'readonly', style: { width: '100%', maxWidth: 380 } }));
+    } else if (s.flow === 'novo' && !s.isNewProduct) {
+      produtoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', width: '100%' } },
+        React.createElement(ns.DataKeyValueList, { label: 'Produto', value: s.name, orientation: 'horizontal' }),
+        React.createElement(ns.DataKeyValueList, { label: 'Categoria', value: s.category || '—', orientation: 'horizontal' }));
+    } else if (s.flow === 'atualizacao') {
+      produtoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+        React.createElement(ns.Field, { type: 'select', label: 'Produto', text3: s.selectedProduct || 'Selecionar produto', options: ALL_PRODUCTS.filter((p) => HAS_PUBLICATION[p]), onChange: this.setSelectedProduct, state: s.productLocked ? 'disabled' : 'default', style: { width: '100%', maxWidth: 380 } }),
+        s.selectedProduct && PRODUCT_TYPE[s.selectedProduct] === 'Projeto Nexo' && React.createElement(ns.DataKeyValueList, { label: 'Versão atual', value: CURRENT_VERSION[s.selectedProduct] || '—', orientation: 'horizontal' }));
+    }
+
+    const productKnown = s.flow === 'atualizacao' ? !!s.selectedProduct : (s.flow === 'novo' && !s.isNewProduct);
+    const tipoSlot = productKnown
+      ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+          React.createElement(ns.StatusBadge, { label: s.contentType, tone: 'neutral' }),
+          React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-muted)' } }, 'Definido automaticamente a partir do produto.'))
+      : React.createElement('div', { style: { display: 'flex', gap: 10 } },
+          React.createElement(ns.Button, { label: 'Projeto Nexo', style2: s.contentType === 'Projeto Nexo' ? 'primary' : 'secondary', onClick: () => this.setContentType('Projeto Nexo') }),
+          React.createElement(ns.Button, { label: 'Power BI', style2: s.contentType === 'Power BI' ? 'primary' : 'secondary', onClick: () => this.setContentType('Power BI') }));
+
+    let configSlot = null;
+    if (isPacote) {
+      configSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+        React.createElement(ns.InputFileUpload, { fileTitle: s.file ? s.file.name : 'Pacote (.zip)', supportingText: 'Envie o pacote versionado deste produto.', accept: '.zip', state: s.file ? 'uploaded' : 'empty', onFileSelected: this.onFileSelected, style: { width: '100%' } }),
+        s.file && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', width: '100%' } },
+          React.createElement(ns.DataKeyValueList, { label: 'Arquivo', value: s.file.name, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Versão', value: s.fileVersion, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Tamanho', value: s.fileSize, orientation: 'horizontal' })));
+    } else if (isPBI) {
+      configSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+        React.createElement(ns.InputText, { label: 'Link do relatório no Power BI', showLabel: true, required: true, value: s.link, onChange: this.onLinkChange, placeholder: 'Cole o link corporativo do relatório', style: { width: '100%' } }),
+        s.reportName && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', width: '100%' } },
+          React.createElement(ns.DataKeyValueList, { label: 'Relatório identificado', value: s.reportName, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Workspace', value: WORKSPACE_NAME, orientation: 'horizontal' })),
+        s.reportName && React.createElement(ns.Field, { label: 'Página inicial', type: 'select', text3: s.homePage, options: HOME_PAGE_OPTIONS, onChange: this.setHomePage, style: { width: '100%', maxWidth: 320 } }));
+    }
+
+    const validationItems = isPacote ? [
+      { name: 'Manifesto válido', state: s.file ? 'success' : 'pending', description: s.file ? 'Manifesto lido com sucesso.' : 'Aguardando pacote.' },
+      { name: 'Estrutura do pacote válida', state: s.file ? 'success' : 'pending', description: s.file ? 'Arquivos obrigatórios encontrados.' : 'Aguardando pacote.' },
+      { name: 'Versão identificada', state: s.file ? 'success' : 'pending', description: s.file ? s.fileVersion + ' identificada no manifesto.' : 'Aguardando pacote.' },
+      { name: 'Rotas válidas', state: s.file ? 'success' : 'pending', description: s.file ? 'Rotas do produto verificadas.' : 'Aguardando pacote.' },
+    ] : isPBI ? [
+      { name: 'Link válido', state: s.link ? 'success' : 'pending', description: s.link ? 'Link reconhecido.' : 'Aguardando link.' },
+      { name: 'Relatório encontrado', state: s.reportName ? 'success' : 'pending', description: s.reportName ? s.reportName + ' localizado.' : 'Aguardando link.' },
+      { name: 'Acesso autorizado', state: s.reportName ? 'success' : 'pending', description: s.reportName ? 'Nexo autorizado a acessar o relatório.' : 'Aguardando relatório.' },
+      { name: 'Página inicial encontrada', state: s.homePage ? 'success' : 'pending', description: s.homePage ? s.homePage : 'Aguardando seleção.' },
+    ] : [];
+    const allValid = validationItems.length > 0 && validationItems.every((v) => v.state === 'success');
+    const validationSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+      React.createElement('ul', { role: 'list', style: { display: 'flex', flexDirection: 'column', gap: 8, margin: 0, padding: 0, listStyle: 'none', width: '100%' } },
+        validationItems.map((v, i) => React.createElement(ns.DeploymentValidationItem, { key: i, name: v.name, state: v.state, description: v.description }))),
+      allValid && React.createElement(ns.FeedbackAlert, { tone: 'success', presentation: 'callout', showTitle: true, title: isPacote ? 'Pacote pronto para publicação' : 'Relatório pronto para publicação', dismiss: false, style: { width: '100%' } }));
+
+    const isFirstPublication = s.flow === 'novo';
+    const acessoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+      React.createElement(ns.StatusBadge, { label: 'Requer configuração de acesso', tone: 'neutral' }),
+      React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, lineHeight: 1.5, color: 'var(--color-text-muted)' } }, 'O produto existe, mas usuários comuns não executam até possuir regra CR/FUNCAORM.'),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+        React.createElement(ns.Toggle, { checked: s.configurarAcesso, onChange: this.setConfigurarAcesso }),
+        React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--color-text-primary)' } }, 'Configurar regra agora')),
+      s.configurarAcesso && React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-muted)' } }, 'Você será direcionado ao formulário de Regra de acesso após publicar.'));
+
+    const summarySlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', width: '100%' } },
+      React.createElement(ns.DataKeyValueList, { label: 'Produto', value: productName || '—', orientation: 'horizontal' }),
+      s.flow === 'novo' && s.isNewProduct && React.createElement(ns.DataKeyValueList, { label: 'Categoria', value: s.category || '—', orientation: 'horizontal' }),
+      React.createElement(ns.DataKeyValueList, { label: 'Tipo', value: s.contentType || '—', orientation: 'horizontal' }),
+      isPacote && React.createElement(ns.DataKeyValueList, { label: 'Versão', value: s.fileVersion || '—', orientation: 'horizontal' }),
+      isPacote && React.createElement(ns.DataKeyValueList, { label: 'Versão anterior', value: CURRENT_VERSION[productName] || 'Nenhuma (primeira publicação)', orientation: 'horizontal' }),
+      isPBI && React.createElement(ns.DataKeyValueList, { label: 'Relatório', value: s.reportName || '—', orientation: 'horizontal' }),
+      isPBI && React.createElement(ns.DataKeyValueList, { label: 'Página inicial', value: s.homePage || '—', orientation: 'horizontal' }),
+      React.createElement(ns.DataKeyValueList, { label: 'Publicado por', value: 'Ana Ferreira', orientation: 'horizontal' }),
+      isFirstPublication && React.createElement(ns.DataKeyValueList, { label: 'Acesso', value: s.configurarAcesso ? 'Configurar agora após publicar' : 'Requer configuração posterior', orientation: 'horizontal' }));
+
+    const showChooser = !s.flow;
+    const showTipoSection = s.flow === 'novo' ? (s.isNewProduct ? !!s.name.trim() : true) : (s.flow === 'atualizacao' ? !!s.selectedProduct : false);
+    const showConfigSection = showTipoSection && !!s.contentType;
+    const showValidationSection = showConfigSection && ((isPacote && !!s.file) || (isPBI && !!s.link));
+    const showAcessoSection = s.flow === 'novo' && showValidationSection && allValid;
+    const showSummarySection = showValidationSection && allValid && (s.flow !== 'novo' || true);
+
+    let pageTitle = 'Nova publicação';
+    let pageSubtitle = 'Escolha como deseja publicar no Nexo.';
+    if (s.flow === 'novo' && s.isNewProduct) { pageTitle = 'Publicar novo produto'; pageSubtitle = 'Cadastre e disponibilize um novo relatório ou projeto no Nexo.'; }
+    else if (s.flow === 'novo' && !s.isNewProduct) { pageTitle = 'Publicar novo produto'; pageSubtitle = 'Primeira publicação — o produto ficará disponível no Nexo após publicar.'; }
+    else if (s.flow === 'atualizacao') { pageTitle = 'Atualizar produto existente'; pageSubtitle = 'Publique uma nova versão ou altere a configuração de um produto existente.'; }
+
+    return {
+      showChooser, showFlow: !showChooser,
+      chooseNovo: this.chooseNovo, chooseAtualizacao: this.chooseAtualizacao,
+      pageTitle, pageSubtitle,
+      produtoDescription: s.flow === 'atualizacao' ? 'Selecione o produto que receberá a atualização.' : 'Dados do produto que receberá esta publicação.',
+      produtoSlot,
+      showTipoSection, tipoDescription: productKnown ? 'Tipo de conteúdo definido automaticamente.' : 'Escolha o tipo de conteúdo desta publicação.', tipoSlot,
+      showConfigSection, configDescription: isPacote ? 'Envie o pacote versionado deste produto.' : (isPBI ? 'Informe o link do relatório publicado no Power BI.' : ''), configSlot,
+      showValidationSection, validationSlot,
+      showAcessoSection, acessoSlot,
+      showSummarySection, summarySlot,
+      publishLabel: s.flow === 'atualizacao' ? 'Publicar atualização' : 'Publicar',
+      publishState: this.canPublish() ? 'default' : 'disabled',
+      handlePublish: this.handlePublish, goList: this.goList,
+      crumbs: [
+        { label: 'Publicações', onClick: this.goList },
+        { label: pageTitle, current: true },
+      ],
+      noop: this.noop,
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed: s.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: s.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        s.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; } },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), active: true, onClick: this.goList },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

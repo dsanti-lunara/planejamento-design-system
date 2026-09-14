@@ -1,0 +1,24 @@
+<!-- @dsCard group="Components" viewport="700x480" name="Data Display" subtitle="Stat cards, avatars, tags, status badges, key/value lists" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface-page)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { DataStatCard, IdentityAvatar, TagCategoryChip, TagTagChip, StatusBadge, MetricDelta, DataKeyValueList, ProductCard, BrandProductLogoTile } = window.DesignSystem_25dd5c;
+function Row({children}){ return <div style={{display:'flex',gap:10,alignItems:'flex-start',flexWrap:'wrap'}}>{children}</div>; }
+function App(){
+  return <>
+    <Row><DataStatCard title="Nível de Serviço" value="93,7%" unit="%" delta="-0,3 p.p." tone="unfavorable" context="D-1" showSparkline/><DataStatCard title="Recebidas" value="34.718" tone="neutral" state="loading"/></Row>
+    <Row><IdentityAvatar content="initials" initials="AC" size="sm"/><IdentityAvatar content="initials" initials="PA" size="md"/><IdentityAvatar content="icon" size="lg"/></Row>
+    <Row><TagCategoryChip category="operacional" label="Operacional"/><TagCategoryChip category="financeiro" label="Financeiro"/><TagTagChip state="default"/></Row>
+    <Row><StatusBadge tone="positive" label="Homologado"/><StatusBadge tone="warning" label="Experimental"/><StatusBadge tone="negative" label="Legacy"/><StatusBadge tone="info" label="Novo"/></Row>
+    <Row><MetricDelta value="+2,4%" tone="positive"/><MetricDelta value="-1,1%" tone="negative"/></Row>
+    <Row><DataKeyValueList orientation="horizontal"/></Row>
+    <Row><ProductCard context="catalog"/><BrandProductLogoTile size="md" shape="rounded" background="brand"/></Row>
+  </>;
+  // UsageRankingBarItem/List moved to data-viz/ — see data-viz/usage-ranking.card.html
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

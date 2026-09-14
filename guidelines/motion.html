@@ -1,0 +1,13 @@
+<!-- @dsCard group="Spacing" viewport="700x220" name="Motion" subtitle="duração, easing, escala de press — base para .ds-interactive" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="padding:16px;background:var(--color-surface-card);font-family:var(--font-sans);font-size:11px;color:var(--color-text-primary);display:flex;flex-direction:column;gap:12px">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 20px">
+<div>Instant <b>80ms</b> · press/active</div><div>Fast <b>120ms</b> · hover, botões</div><div>Standard <b>200ms</b> · overlays, painéis</div>
+<div>Ease padrão <b>cubic-bezier(.2,0,0,1)</b></div><div>Ease saída <b>cubic-bezier(0,0,.2,1)</b></div><div>Escala de press <b>0.98</b></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<button class="ds-interactive" style="font-family:var(--font-sans);font-size:12px;padding:8px 16px;border-radius:8px;border:none;background:var(--color-action-primary);color:var(--color-action-on-primary);cursor:pointer">Testar hover/press/focus</button>
+<span style="color:var(--color-text-secondary)">tab + clique para ver foco, hover e press</span>
+</div>
+<div style="color:var(--color-text-secondary);max-width:520px">Princípios: feedback rápido e sutil (nunca lento/decorativo) — hover eleva levemente, press comprime a 0.98 e escurece, foco usa contorno fino no token de foco, disabled cai para 50% de opacidade. Sem bounce/elástico — combina com o tom denso e analítico do produto.</div>
+</div>

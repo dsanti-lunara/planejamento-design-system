@@ -1,0 +1,8 @@
+:root {
+  --duration-instant: 80ms; /* @kind other */
+  --duration-fast: 120ms; /* @kind other */
+  --duration-standard: 200ms; /* @kind other */
+  --ease-standard: cubic-bezier(.2,0,0,1); /* @kind other */
+  --ease-out: cubic-bezier(0,0,.2,1); /* @kind other */
+  --scale-pressed: .98; /* @kind other */
+}

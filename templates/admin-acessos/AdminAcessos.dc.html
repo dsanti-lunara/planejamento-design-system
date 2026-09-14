@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="Admin · Acessos" description="Área de gestão de acessos (rota /admin/acessos) — Overview/Regras de acesso/Exceções/Administradores, autorização de conteúdo por CR+FUNCAORM (Hominum), poder administrativo separado, aba sincronizada via ?tab=" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminPageHeader" title="Acessos" description="Gerencie regras, exceções e administradores dos produtos do Nexo." breadcrumb="{{ false }}" status="{{ false }}" primaryAction="{{ false }}" secondaryAction="{{ false }}" overflow="{{ false }}" style="width:100%" hint-size="100%,64px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationTabGroup" tabs="{{ tabs }}" activeId="{{ activeTab }}" onSelect="{{ setTab }}" style="width:100%" hint-size="100%,44px"></x-import>
+
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:20px;width:100%;min-width:0">
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;width:100%;min-width:0">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="{{ k.label }}" value="{{ k.value }}" secondary="{{ k.secondary }}" secondaryTone="{{ k.tone }}" style="width:100%;min-width:0" hint-size="100%,96px"></x-import>
+</sc-for>
+</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Consultar acesso" style2="secondary" onClick="{{ openConsulta }}" hint-size="150px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova regra" style2="primary" onClick="{{ openNewRule }}" hint-size="110px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova exceção" style2="secondary" onClick="{{ openNewException }}" hint-size="130px,40px"></x-import>
+</div>
+
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:20px;width:100%;min-width:0;align-items:stretch">
+<section style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:4px;background:var(--color-surface-card);border-radius:14px;padding:16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 8px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Alterações recentes</h2>
+<sc-for list="{{ recentChanges }}" as="c" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid var(--color-border-subtle)">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">{{ c.label }}</span>
+<span style="font-size:12px;color:var(--color-text-muted)">{{ c.detail }} · {{ c.date }} · {{ c.by }}</span>
+</div>
+</sc-for>
+</section>
+<section style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:4px;background:var(--color-surface-card);border-radius:14px;padding:16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 8px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Exceções próximas do vencimento</h2>
+<sc-for list="{{ expiringExceptions }}" as="e" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--color-border-subtle)">
+<div style="min-width:0;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.userName }}</span>
+<span style="font-size:12px;color:var(--color-text-muted)">{{ e.product }}</span>
+</div>
+<span style="font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);flex-shrink:0">até {{ e.end }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ noExpiringExceptions }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 0;font-size:13px;color:var(--color-text-muted)">Nenhuma exceção próxima do vencimento.</div></sc-if>
+</section>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;background:var(--color-surface-card);border-radius:14px;padding:16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Produtos sem regra de acesso</h2>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ productsWithoutRule }}" as="p" hint-placeholder-count="1">
+<span style="font-size:13px;color:var(--color-text-primary);background:var(--color-surface-subtle);border-radius:999px;padding:6px 12px">{{ p }}</span>
+</sc-for>
+<sc-if value="{{ allProductsHaveRules }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px;color:var(--color-text-muted)">Todos os produtos possuem ao menos uma regra ativa.</span></sc-if>
+</div>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isRegras }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;width:100%;min-width:0">
+<div style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" searchPlaceholder="Buscar por nome da regra" searchValue="{{ regrasFilter.search }}" onSearchChange="{{ onRegrasSearchChange }}" statusLabel="Status" statusOptions="{{ ruleStatusOptions }}" statusValue="{{ regrasFilter.status }}" onStatusChange="{{ onRegrasStatusChange }}" productLabel="Produto" productOptions="{{ productOptions }}" productValue="{{ regrasFilter.product }}" onProductChange="{{ onRegrasProductChange }}" showPeriod="{{ false }}" activeFilters="{{ regrasHasFilters }}" activeFilterChips="{{ regrasFilterChips }}" clearFilters="{{ regrasHasFilters }}" onClearFilters="{{ clearRegrasFilters }}" onMoreFilters="{{ openRegrasMoreFilters }}" style="flex:1 1 480px;min-width:320px" hint-size="480px,64px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova regra" style2="primary" onClick="{{ openNewRule }}" style="flex-shrink:0" hint-size="120px,40px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ ruleColumns }}" rows="{{ filteredRules }}" density="standard" hoverable="{{ true }}" onRowClick="{{ onRuleRowClick }}" empty="{{ rulesEmptyState }}" style="width:100%" hint-size="100%,360px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationPagination" page="{{ 1 }}" totalPages="{{ 1 }}" style="align-self:center" hint-size="260px,36px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isExcecoes }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;width:100%;min-width:0">
+<div style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" searchPlaceholder="Buscar por usuário ou produto" searchValue="{{ excFilter.search }}" onSearchChange="{{ onExcSearchChange }}" statusLabel="Status" statusOptions="{{ exceptionStatusOptions }}" statusValue="{{ excFilter.status }}" onStatusChange="{{ onExcStatusChange }}" productLabel="Produto" productOptions="{{ productOptions }}" productValue="{{ excFilter.product }}" onProductChange="{{ onExcProductFilterChange }}" showPeriod="{{ false }}" activeFilters="{{ excHasFilters }}" activeFilterChips="{{ excFilterChips }}" clearFilters="{{ excHasFilters }}" onClearFilters="{{ clearExcFilters }}" style="flex:1 1 480px;min-width:320px" hint-size="480px,64px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova exceção" style2="primary" onClick="{{ openNewException }}" style="flex-shrink:0" hint-size="130px,40px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ exceptionColumns }}" rows="{{ filteredExceptions }}" density="standard" hoverable="{{ false }}" empty="{{ excEmptyState }}" style="width:100%" hint-size="100%,360px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationPagination" page="{{ 1 }}" totalPages="{{ 1 }}" style="align-self:center" hint-size="260px,36px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdministradores }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;width:100%;min-width:0">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+<div style="font-size:13px;line-height:1.5;color:var(--color-text-muted);max-width:640px">Administradores possuem poder de administração do Nexo (publicar, gerenciar regras e exceções, auditoria). O acesso ao CONTEÚDO dos produtos é controlado pelas Regras de acesso (CR/FUNCAORM), não por este perfil.</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Adicionar administrador" style2="primary" onClick="{{ openAddAdmin }}" style="flex-shrink:0" hint-size="180px,40px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ adminColumns }}" rows="{{ admins }}" density="standard" hoverable="{{ false }}" style="width:100%" hint-size="100%,360px"></x-import>
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isRuleFormOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:620px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">{{ ruleFormTitle }}</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputText" label="Nome da regra" showLabel="{{ true }}" required="{{ true }}" value="{{ form.name }}" onChange="{{ onFormNameChange }}" placeholder="Ex.: Planejamento Claro" style="width:100%" hint-size="100%,64px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" label="Produto" type="select" text3="{{ form.product }}" options="{{ productOptions }}" onChange="{{ onFormProductChange }}" style="width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">Centros de Resultado (CR)</span>
+<div style="display:flex;gap:6px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="CRs específicos" size="compact" style2="{{ crModeListStyle }}" onClick="{{ setCrModeList }}" hint-size="120px,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Qualquer CR" size="compact" style2="{{ crModeAnyStyle }}" onClick="{{ setCrModeAny }}" hint-size="100px,32px"></x-import>
+</div>
+</div>
+<sc-if value="{{ crModeIsList }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="CRs" value="{{ form.crList }}" options="{{ crOptions }}" onChange="{{ onFormCrListChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+</sc-if>
+<sc-if value="{{ crModeIsAny }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:12px;color:var(--color-text-muted);background:var(--color-surface-subtle);border-radius:8px;padding:8px 10px">Qualquer CR poderá acessar, respeitando a FUNCAORM definida abaixo.</div>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">FUNCAORM</span>
+<div style="display:flex;gap:6px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Funções específicas" size="compact" style2="{{ funcModeListStyle }}" onClick="{{ setFuncModeList }}" hint-size="130px,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Qualquer função" size="compact" style2="{{ funcModeAnyStyle }}" onClick="{{ setFuncModeAny }}" hint-size="120px,32px"></x-import>
+</div>
+</div>
+<sc-if value="{{ funcModeIsList }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="FUNCAORM" value="{{ form.funcList }}" options="{{ funcOptions }}" onChange="{{ onFormFuncListChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+</sc-if>
+<sc-if value="{{ funcModeIsAny }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:12px;color:var(--color-text-muted);background:var(--color-surface-subtle);border-radius:8px;padding:8px 10px">Qualquer FUNCAORM poderá acessar, respeitando o CR definido acima.</div>
+</sc-if>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Toggle" checked="{{ form.vigenciaEnabled }}" onChange="{{ onToggleVigencia }}" hint-size="40px,22px"></x-import>
+<span style="font-size:13px;color:var(--color-text-primary)">Definir vigência</span>
+</div>
+<sc-if value="{{ form.vigenciaEnabled }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DateRangePicker" label="Vigência da regra" value="{{ form.vigencia }}" onChange="{{ onFormVigenciaChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+</sc-if>
+
+<div style="display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Toggle" checked="{{ form.active }}" onChange="{{ onToggleActive }}" hint-size="40px,22px"></x-import>
+<span style="font-size:13px;color:var(--color-text-primary)">Regra ativa</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;background:var(--color-surface-subtle);border-radius:10px;padding:14px 16px">
+<h3 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--color-text-primary)">Resumo da regra</h3>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Produto" value="{{ form.product }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="CR" value="{{ summary.crLabel }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="FUNCAORM" value="{{ summary.funcLabel }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Lógica" value="{{ summary.logicLabel }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Vigência" value="{{ summary.vigenciaLabel }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Status" value="{{ summary.statusLabel }}" orientation="horizontal" hint-size="100%,28px"></x-import>
+</div>
+
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeSheet }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Salvar regra" style2="primary" state="{{ saveRuleState }}" onClick="{{ saveRuleForm }}" hint-size="120px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRuleDetailOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:560px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">{{ ruleDetail.name }}</h2>
+{{ ruleDetail.statusEl }}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Produto</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.product }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Lógica</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.logic }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">CRs</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.crLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">FUNCAORM</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.funcLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Vigência</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.vigenciaLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Criado por</div><div style="font-size:14px;color:var(--color-text-primary)">{{ ruleDetail.createdBy }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Criado em</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ ruleDetail.createdAt }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Última atualização</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ ruleDetail.updatedAt }}</div></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding-top:6px;border-top:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Consultar acesso" size="compact" style2="secondary" onClick="{{ openConsultaFromDetail }}" hint-size="140px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Duplicar" size="compact" style2="secondary" onClick="{{ duplicateFromDetail }}" hint-size="90px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ ruleDetail.toggleLabel }}" size="compact" style2="destructive" onClick="{{ toggleStatusFromDetail }}" hint-size="90px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Editar" size="compact" style2="primary" onClick="{{ editFromDetail }}" hint-size="80px,36px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" onClick="{{ closeSheet }}" style="align-self:flex-end" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMoreFiltersOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:460px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Mais filtros</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="CR" value="{{ regrasFilter.cr }}" options="{{ crOptions }}" onChange="{{ onRegrasCrFilterChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="FUNCAORM" value="{{ regrasFilter.func }}" options="{{ funcOptions }}" onChange="{{ onRegrasFuncFilterChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Limpar" style2="secondary" onClick="{{ clearRegrasMoreFilters }}" hint-size="90px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Aplicar" style2="primary" onClick="{{ closeSheet }}" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isExceptionFormOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:560px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Nova exceção</h2>
+<div style="font-size:12px;line-height:1.5;color:var(--color-text-muted);background:var(--color-surface-subtle);border-radius:8px;padding:8px 10px">Exceção individual: concessão administrativa pontual. Não altera a regra estrutural do produto.</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" label="Usuário" type="select" text3="{{ excForm.userName }}" options="{{ userNameOptions }}" onChange="{{ onExcUserChange }}" style="width:100%" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" label="Produto" type="select" text3="{{ excForm.product }}" options="{{ productOptions }}" onChange="{{ onExcProductChange }}" style="width:100%" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DateRangePicker" label="Vigência (obrigatória)" value="{{ excForm.vigencia }}" onChange="{{ onExcVigenciaChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputTextarea" label="Justificativa" value="{{ excForm.justification }}" onChange="{{ onExcJustificationChange }}" style="width:100%" hint-size="100%,90px"></x-import>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeSheet }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Criar exceção" style2="primary" state="{{ saveExcState }}" onClick="{{ saveExceptionForm }}" hint-size="130px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isExceptionDetailOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:540px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">{{ excDetail.userName }} · {{ excDetail.product }}</h2>
+{{ excDetail.statusEl }}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">CR atual</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ excDetail.crLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">FUNCAORM</div><div style="font-size:14px;color:var(--color-text-primary)">{{ excDetail.funcao }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Criado por</div><div style="font-size:14px;color:var(--color-text-primary)">{{ excDetail.createdBy }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Criado em</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ excDetail.createdAt }}</div></div>
+</div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Justificativa</div><div style="font-size:14px;line-height:1.5;color:var(--color-text-primary)">{{ excDetail.justification }}</div></div>
+<sc-if value="{{ excDetail.hasAudit }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:12px;color:var(--color-text-muted)">{{ excDetail.auditLine }}</div>
+</sc-if>
+<sc-if value="{{ excEditingVigencia }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DateRangePicker" label="Vigência" value="{{ excEditForm.vigencia }}" onChange="{{ onExcEditVigenciaChange }}" style="width:100%" hint-size="100%,44px"></x-import>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" size="compact" style2="secondary" onClick="{{ cancelEditVigencia }}" hint-size="90px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Salvar vigência" size="compact" style2="primary" onClick="{{ saveEditVigencia }}" hint-size="120px,36px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ excNotEditingVigencia }}" hint-placeholder-val="{{ true }}">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Vigência</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ excDetail.vigenciaLabel }}</div></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding-top:6px;border-top:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Editar vigência" size="compact" style2="secondary" onClick="{{ startEditVigencia }}" hint-size="120px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Revogar" size="compact" style2="destructive" state="{{ excDetail.revokeState }}" onClick="{{ revokeFromDetail }}" hint-size="90px,36px"></x-import>
+</div>
+</sc-if>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" onClick="{{ closeSheet }}" style="align-self:flex-end" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isConsultaOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:600px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Consultar acesso</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputText" label="Buscar usuário" showLabel="{{ true }}" value="{{ consultaQuery }}" onChange="{{ onConsultaQueryChange }}" placeholder="Nome, matrícula ou e-mail" style="width:100%" hint-size="100%,64px"></x-import>
+
+<sc-if value="{{ consultaShowResults }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{ consultaResults }}" as="cu" hint-placeholder-count="2">
+<div onclick="{{ cu.onSelect }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--color-action-hover)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" content="initials" initials="{{ cu.initials }}" size="sm" hint-size="28px,28px"></x-import>
+<div style="display:flex;flex-direction:column;min-width:0">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">{{ cu.name }}</span>
+<span style="font-size:12px;color:var(--color-text-muted)">{{ cu.email }} · matrícula {{ cu.matricula }}</span>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ consultaNoResults }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-text-muted);padding:8px 0">Nenhum usuário encontrado.</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ consultaHasSelection }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--color-border-subtle);padding-top:14px">
+<div style="display:flex;align-items:center;gap:12px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" content="initials" initials="{{ consultaUser.initials }}" size="lg" hint-size="48px,48px"></x-import>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:16px;font-weight:700;color:var(--color-text-primary)">{{ consultaUser.name }}</span>
+<span style="font-size:13px;color:var(--color-text-muted)">Matrícula {{ consultaUser.matricula }}</span>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">CRs atuais</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ consultaUser.crLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">FUNCAORM atual</div><div style="font-size:14px;color:var(--color-text-primary)">{{ consultaUser.funcao }}</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ consultaUser.productRows }}" as="pr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--color-border-subtle);border-radius:10px;padding:12px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">{{ pr.product }}</span>
+{{ pr.statusEl }}
+</div>
+<div style="font-size:12px;color:var(--color-text-secondary);line-height:1.6">{{ pr.explanation }}</div>
+</div>
+</sc-for>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Buscar outro usuário" size="compact" style2="secondary" onClick="{{ resetConsulta }}" style="align-self:flex-start" hint-size="160px,36px"></x-import>
+</div>
+</sc-if>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" onClick="{{ closeSheet }}" style="align-self:flex-end" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdminFormOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:420px;max-width:100%;max-height:calc(100vh - 48px);overflow-y:auto;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:22px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">{{ adminFormTitle }}</h2>
+
+<sc-if value="{{ adminFormIsEdit }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" content="initials" initials="{{ adminForm.initials }}" size="md" hint-size="40px,40px"></x-import>
+<div style="display:flex;flex-direction:column;min-width:0">
+<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">{{ adminForm.name }}</span>
+<span style="font-size:12px;color:var(--color-text-muted)">Perfil atual: {{ adminForm.currentPerfilLabel }}</span>
+</div>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" label="Perfil administrativo" type="select" text3="{{ adminForm.perfil }}" options="{{ adminProfileOptions }}" onChange="{{ onAdminPerfilChange }}" style="width:100%" hint-size="100%,56px"></x-import>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Escopo</div><div style="font-size:14px;color:var(--color-text-primary)">{{ adminForm.escopo }}</div></div>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeSheet }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Salvar" style2="primary" onClick="{{ saveAdminForm }}" hint-size="90px,40px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ adminFormIsNew }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:13px;font-weight:600;color:var(--color-text-secondary)">Identificar usuário</div>
+
+<sc-if value="{{ !adminSearchByName }}" hint-placeholder-val="{{ true }}">
+<form onsubmit="{{ onMatriculaSubmit }}" style="display:flex;gap:8px;align-items:flex-end;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputText" label="Matrícula" showLabel="{{ true }}" value="{{ adminForm.matricula }}" onChange="{{ onAdminMatriculaChange }}" placeholder="Digite a matrícula" style="flex:1;min-width:0" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Buscar" style2="secondary" onClick="{{ searchByMatricula }}" style="flex-shrink:0" hint-size="90px,40px"></x-import>
+</form>
+<span onclick="{{ switchToNameSearch }}" style="font-size:12px;color:var(--color-text-link);cursor:pointer;align-self:flex-start">Não sabe a matrícula? Buscar por nome</span>
+</sc-if>
+
+<sc-if value="{{ adminSearchByName }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputText" label="Nome ou e-mail" showLabel="{{ true }}" value="{{ adminForm.nameQuery }}" onChange="{{ onAdminNameQueryChange }}" placeholder="Digite nome ou e-mail" style="width:100%" hint-size="100%,56px"></x-import>
+<sc-if value="{{ adminNameHasResults }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto">
+<sc-for list="{{ adminNameResults }}" as="nu" hint-placeholder-count="2">
+<div onclick="{{ nu.onSelect }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--color-action-hover)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" content="initials" initials="{{ nu.initials }}" size="sm" hint-size="28px,28px"></x-import>
+<div style="display:flex;flex-direction:column;min-width:0">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">{{ nu.name }}</span>
+<span style="font-size:12px;color:var(--color-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ nu.email }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ adminNameNoResults }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-text-muted);padding:4px 0">Nenhum usuário encontrado.</div></sc-if>
+<span onclick="{{ switchToMatriculaSearch }}" style="font-size:12px;color:var(--color-text-link);cursor:pointer;align-self:flex-start">Buscar por matrícula</span>
+</sc-if>
+
+<sc-if value="{{ adminShowNotFound }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-text-negative);background:var(--color-state-negative-subtle);border-radius:8px;padding:10px 12px">Não encontramos esta matrícula no Hominum.</div></sc-if>
+<sc-if value="{{ adminShowInactive }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-text-negative);background:var(--color-state-negative-subtle);border-radius:8px;padding:10px 12px">O usuário está inativo no Hominum e não pode receber privilégios administrativos.</div></sc-if>
+
+<sc-if value="{{ adminShowExisting }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px;background:var(--color-state-warning-subtle);border-radius:8px;padding:10px 12px">
+<span style="font-size:13px;color:var(--color-text-warning)">Este usuário já possui acesso administrativo como <strong>{{ adminForm.existingPerfil }}</strong>.</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Alterar perfil" size="compact" style2="secondary" onClick="{{ switchToEditExisting }}" style="align-self:flex-start" hint-size="140px,36px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ adminShowSummary }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--color-border-subtle);padding-top:12px">
+<div style="display:flex;align-items:center;gap:12px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" content="initials" initials="{{ adminForm.initials }}" size="md" hint-size="44px,44px"></x-import>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:15px;font-weight:700;color:var(--color-text-primary)">{{ adminForm.name }}</span>
+<span style="font-size:12px;color:var(--color-text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ adminForm.email }}</span>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Matrícula</div><div style="font-size:13px;color:var(--color-text-primary);font-family:var(--font-mono,monospace)">{{ adminForm.matricula }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Status</div><div style="font-size:13px;color:var(--color-text-positive)">{{ adminForm.status }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">CRs</div><div style="font-size:13px;color:var(--color-text-primary)">{{ adminForm.crLabel }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">FUNCAORM</div><div style="font-size:13px;color:var(--color-text-primary)">{{ adminForm.funcao }}</div></div>
+</div>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" label="Perfil administrativo" type="select" text3="{{ adminForm.perfil }}" options="{{ adminProfileOptions }}" onChange="{{ onAdminPerfilChange }}" style="width:100%" hint-size="100%,56px"></x-import>
+<sc-if value="{{ adminForm.perfil }}" hint-placeholder-val="{{ false }}">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Escopo</div><div style="font-size:14px;color:var(--color-text-primary)">{{ adminForm.escopo }}</div></div>
+</sc-if>
+</sc-if>
+
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeSheet }}" hint-size="100px,40px"></x-import>
+<sc-if value="{{ !adminShowSummary }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Buscar" style2="primary" onClick="{{ searchByMatricula }}" hint-size="90px,40px"></x-import>
+</sc-if>
+<sc-if value="{{ adminShowSummary }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Adicionar administrador" style2="primary" state="{{ adminSaveState }}" onClick="{{ saveAdminForm }}" hint-size="190px,40px"></x-import>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PRODUCTS = ['Claro Brasil', 'Painel de Clientes', 'Banco de Horas', 'Governança de Dados', 'Portal Admin'];
+const CR_OPTIONS = ['31001', '31002', '31003', '31004', '31005', '42015', '55010', '55011', '60020', '71005', '90010', '12003'];
+const FUNC_OPTIONS = ['Supervisor', 'Coordenador', 'Gerente', 'Analista'];
+const ADMIN_PROFILES = ['Portal Admin', 'Access Manager', 'Publisher', 'Security Admin'];
+const ADMIN_SCOPE_MAP = { 'Portal Admin': 'Global', 'Access Manager': 'Acessos', 'Publisher': 'Publicações', 'Security Admin': 'Segurança / Auditoria' };
+const emptyAdminForm = () => ({ matricula: '', nameQuery: '', searchByName: false, status: 'notfound_hidden', foundUser: null, perfil: '', name: '', initials: '', email: '', crLabel: '', funcao: '', existingPerfil: '' });
+
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    tab: 'overview',
+    rules: [
+      { id: 'ru1', name: 'Planejamento Claro', product: 'Claro Brasil', crMode: 'list', crList: ['31001', '31002', '31003', '31004', '31005'], funcMode: 'list', funcList: ['Supervisor', 'Coordenador'], status: 'Ativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '26/08/2026', createdAt: '12/03/2026', createdBy: 'Ana Ferreira' },
+      { id: 'ru2', name: 'Painel Executivo', product: 'Painel de Clientes', crMode: 'any', crList: [], funcMode: 'list', funcList: ['Gerente'], status: 'Ativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '20/08/2026', createdAt: '02/02/2026', createdBy: 'Ana Ferreira' },
+      { id: 'ru3', name: 'Banco de Horas Geral', product: 'Banco de Horas', crMode: 'any', crList: [], funcMode: 'any', funcList: [], status: 'Ativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '15/08/2026', createdAt: '10/01/2026', createdBy: 'Sistema' },
+      { id: 'ru4', name: 'Governança CR Sul', product: 'Governança de Dados', crMode: 'list', crList: ['55010', '55011'], funcMode: 'any', funcList: [], status: 'Ativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '10/08/2026', createdAt: '22/05/2026', createdBy: 'Rafael Lima' },
+      { id: 'ru5', name: 'Coordenação Nacional', product: 'Painel de Clientes', crMode: 'any', crList: [], funcMode: 'list', funcList: ['Coordenador'], status: 'Inativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '02/07/2026', createdAt: '14/04/2026', createdBy: 'Ana Ferreira' },
+      { id: 'ru6', name: 'Auditoria Interna CR90', product: 'Governança de Dados', crMode: 'list', crList: ['90010'], funcMode: 'list', funcList: ['Analista', 'Supervisor'], status: 'Ativa', vigenciaLabel: 'Sem prazo definido', updatedAt: '22/08/2026', createdAt: '01/08/2026', createdBy: 'Ana Ferreira' },
+    ],
+    users: [
+      { id: 'u1', name: 'Mariana Oliveira', initials: 'MO', email: 'mariana.oliveira@empresa.com', matricula: '40021', crs: ['31001', '42015'], funcao: 'Supervisor', status: 'Ativo' },
+      { id: 'u2', name: 'Bruno Costa', initials: 'BC', email: 'bruno.costa@empresa.com', matricula: '40088', crs: ['55010'], funcao: 'Gerente', status: 'Ativo' },
+      { id: 'u3', name: 'Camila Nunes', initials: 'CN', email: 'camila.nunes@empresa.com', matricula: '40102', crs: ['90010', '31002'], funcao: 'Analista', status: 'Ativo' },
+      { id: 'u4', name: 'Rafael Lima', initials: 'RL', email: 'rafael.lima@empresa.com', matricula: '39990', crs: ['31001', '31003', '60020'], funcao: 'Coordenador', status: 'Ativo' },
+      { id: 'u5', name: 'Fernanda Souza', initials: 'FS', email: 'fernanda.souza@empresa.com', matricula: '40205', crs: ['42015'], funcao: 'Supervisor', status: 'Ativo' },
+      { id: 'u6', name: 'Marcelo Alves', initials: 'MA', email: 'marcelo.alves@empresa.com', matricula: '38820', crs: ['71005'], funcao: 'Analista', status: 'Inativo' },
+    ],
+    exceptions: [
+      { id: 'ex1', userId: 'u3', product: 'Banco de Horas', start: '01/08/2026', end: '30/09/2026', justification: 'Cobertura temporária durante licença da titular do CR.', createdBy: 'Ana Ferreira', createdAt: '01/08/2026', revoked: false },
+      { id: 'ex2', userId: 'u6', product: 'Banco de Horas', start: '01/03/2026', end: '30/06/2026', justification: 'Projeto encerrado — acesso pontual para fechamento.', createdBy: 'Ana Ferreira', createdAt: '28/02/2026', revoked: false },
+      { id: 'ex3', userId: 'u5', product: 'Claro Brasil', start: '01/09/2026', end: '31/12/2026', justification: 'Apoio pontual ao time comercial da conta Claro durante transição de CR.', createdBy: 'Rafael Lima', createdAt: '20/08/2026', revoked: false },
+    ],
+    admins: [
+      { id: 'ad1', name: 'Ana Ferreira', initials: 'AF', matricula: '40001', perfil: 'Portal Admin', escopo: 'Global', status: 'Ativo', updatedAt: '26/08/2026' },
+      { id: 'ad2', name: 'Rafael Lima', initials: 'RL', matricula: '39990', perfil: 'Access Manager', escopo: 'Acessos', status: 'Ativo', updatedAt: '24/08/2026' },
+      { id: 'ad3', name: 'Bruno Costa', initials: 'BC', matricula: '40088', perfil: 'Publisher', escopo: 'Publicações', status: 'Ativo', updatedAt: '20/08/2026' },
+      { id: 'ad4', name: 'Camila Nunes', initials: 'CN', matricula: '40102', perfil: 'Security Admin', escopo: 'Auditoria', status: 'Ativo', updatedAt: '22/08/2026' },
+    ],
+    regrasFilter: { search: '', status: [], product: [], cr: [], func: [] },
+    excFilter: { search: '', status: [], product: [] },
+    sheet: null,
+    form: null,
+    excForm: null,
+    excEditingVigencia: false,
+    excEditForm: null,
+    consultaQuery: '',
+    consultaSelectedId: null,
+    adminForm: null,
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  noop = () => {};
+  today = () => new Date().toLocaleDateString('pt-BR');
+  parseDate(s) { const [d, m, y] = s.split('/'); return new Date(y, m - 1, d); }
+
+  componentDidMount() {
+    const t = this.query('tab');
+    const valid = ['overview', 'regras', 'excecoes', 'administradores'];
+    if (t && valid.includes(t)) this.setState({ tab: t });
+    const produto = this.query('produto');
+    if (produto && PRODUCTS.includes(produto)) {
+      if (t === 'regras') this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, product: [produto] } }));
+      if (t === 'excecoes') this.setState((s) => ({ excFilter: { ...s.excFilter, product: [produto] } }));
+    }
+    if (this.query('novaRegra') === '1') {
+      const p = (produto && PRODUCTS.includes(produto)) ? produto : PRODUCTS[0];
+      this.setState({ sheet: { type: 'ruleForm', mode: 'new' }, form: { ...this.blankRuleForm(), product: p } });
+    }
+    if (this.query('novaExcecao') === '1') {
+      const p = (produto && PRODUCTS.includes(produto)) ? produto : PRODUCTS[0];
+      this.setState({ sheet: { type: 'exceptionForm' }, excForm: { ...this.blankExcForm(), product: p } });
+    }
+    const ruleId = this.query('ruleId');
+    if (ruleId) {
+      const r = this.state.rules.find((x) => x.id === ruleId);
+      if (r) this.openEditRule(r);
+    }
+  }
+
+  syncUrl(tab) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', tab);
+      window.history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+    } catch (e) {}
+  }
+
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goProducts = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  setTab = (id) => { this.setState({ tab: id }); this.syncUrl(id); };
+  closeSheet = () => this.setState({ sheet: null, form: null, excForm: null, excEditingVigencia: false, excEditForm: null, adminForm: null });
+  stopClick = (e) => e.stopPropagation();
+
+  evaluateAccess(user, product) {
+    const activeRules = this.state.rules.filter((r) => r.product === product && r.status === 'Ativa');
+    for (const r of activeRules) {
+      const crMatchList = r.crMode === 'any' ? [] : user.crs.filter((c) => r.crList.includes(c));
+      const crOk = r.crMode === 'any' || crMatchList.length > 0;
+      const funcOk = r.funcMode === 'any' || r.funcList.includes(user.funcao);
+      if (crOk && funcOk) {
+        return { authorized: true, origin: 'rule', rule: r, crMatch: r.crMode === 'any' ? 'Qualquer CR' : crMatchList.join(', '), funcMatch: r.funcMode === 'any' ? 'Qualquer função' : user.funcao };
+      }
+    }
+    const exc = this.state.exceptions.find((e) => e.userId === user.id && e.product === product && this.excStatus(e) === 'Ativa');
+    if (exc) return { authorized: true, origin: 'exception', exception: exc };
+    return { authorized: false };
+  }
+
+  excStatus(exc) {
+    if (exc.revoked) return 'Revogada';
+    const today = new Date();
+    const start = this.parseDate(exc.start);
+    const end = this.parseDate(exc.end);
+    if (today < start) return 'Agendada';
+    if (today > end) return 'Expirada';
+    return 'Ativa';
+  }
+
+  // ---- Rule form ----
+  blankRuleForm() { return { id: null, name: '', product: PRODUCTS[0], crMode: 'list', crList: [], funcMode: 'list', funcList: [], vigenciaEnabled: false, vigencia: { preset: 'custom', start: '', end: '' }, active: true }; }
+  openNewRule = () => this.setState({ sheet: { type: 'ruleForm', mode: 'new' }, form: this.blankRuleForm() });
+  openEditRule = (rule) => this.setState({ sheet: { type: 'ruleForm', mode: 'edit', id: rule.id }, form: { id: rule.id, name: rule.name, product: rule.product, crMode: rule.crMode, crList: rule.crList.slice(), funcMode: rule.funcMode, funcList: rule.funcList.slice(), vigenciaEnabled: false, vigencia: { preset: 'custom', start: '', end: '' }, active: rule.status === 'Ativa' } });
+  onFormNameChange = (e) => this.setState((s) => ({ form: { ...s.form, name: e.target.value } }));
+  onFormProductChange = (v) => this.setState((s) => ({ form: { ...s.form, product: v } }));
+  setCrModeList = () => this.setState((s) => ({ form: { ...s.form, crMode: 'list' } }));
+  setCrModeAny = () => this.setState((s) => ({ form: { ...s.form, crMode: 'any', crList: [] } }));
+  onFormCrListChange = (v) => this.setState((s) => ({ form: { ...s.form, crList: v } }));
+  setFuncModeList = () => this.setState((s) => ({ form: { ...s.form, funcMode: 'list' } }));
+  setFuncModeAny = () => this.setState((s) => ({ form: { ...s.form, funcMode: 'any', funcList: [] } }));
+  onFormFuncListChange = (v) => this.setState((s) => ({ form: { ...s.form, funcList: v } }));
+  onToggleVigencia = (checked) => this.setState((s) => ({ form: { ...s.form, vigenciaEnabled: checked } }));
+  onFormVigenciaChange = (v) => this.setState((s) => ({ form: { ...s.form, vigencia: v } }));
+  onToggleActive = (checked) => this.setState((s) => ({ form: { ...s.form, active: checked } }));
+
+  computeSummary(form) {
+    const crLabel = form.crMode === 'any' ? 'Qualquer CR' : (form.crList.slice(0, 3).join(', ') + (form.crList.length > 3 ? ' +' + (form.crList.length - 3) : '') || '—');
+    const funcLabel = form.funcMode === 'any' ? 'Qualquer função' : (form.funcList.join(', ') || '—');
+    const logicLabel = form.crMode === 'any' && form.funcMode === 'any' ? 'Todos os usuários' : (form.crMode !== 'any' && form.funcMode !== 'any' ? 'CR E FUNCAORM' : (form.crMode !== 'any' ? 'Somente CR' : 'Somente FUNCAORM'));
+    const vigenciaLabel = form.vigenciaEnabled && form.vigencia.start && form.vigencia.end ? (form.vigencia.start + ' — ' + form.vigencia.end) : 'Sem prazo definido';
+    const statusLabel = form.active ? 'Ativa' : 'Inativa';
+    return { crLabel, funcLabel, logicLabel, vigenciaLabel, statusLabel };
+  }
+
+  saveRuleForm = () => {
+    const f = this.state.form;
+    if (!f.name.trim() || !f.product) return;
+    const summary = this.computeSummary(f);
+    if (f.id) {
+      this.setState((s) => ({ rules: s.rules.map((r) => r.id === f.id ? { ...r, name: f.name, product: f.product, crMode: f.crMode, crList: f.crList, funcMode: f.funcMode, funcList: f.funcList, status: f.active ? 'Ativa' : 'Inativa', vigenciaLabel: summary.vigenciaLabel, updatedAt: this.today() } : r) }));
+    } else {
+      this.setState((s) => ({ rules: [...s.rules, { id: 'ru' + Date.now(), name: f.name, product: f.product, crMode: f.crMode, crList: f.crList, funcMode: f.funcMode, funcList: f.funcList, status: f.active ? 'Ativa' : 'Inativa', vigenciaLabel: summary.vigenciaLabel, updatedAt: this.today(), createdAt: this.today(), createdBy: 'Ana Ferreira' }] }));
+    }
+    this.closeSheet();
+  };
+
+  onRuleRowClick = (row) => this.setState({ sheet: { type: 'ruleDetail', id: row.id } });
+  editFromDetail = () => { const r = this.state.rules.find((x) => x.id === this.state.sheet.id); this.openEditRule(r); };
+  duplicateFromDetail = () => {
+    const r = this.state.rules.find((x) => x.id === this.state.sheet.id);
+    const copy = { ...r, id: 'ru' + Date.now(), name: r.name + ' (cópia)', status: 'Inativa', updatedAt: this.today(), createdAt: this.today() };
+    this.setState((s) => ({ rules: [...s.rules, copy] }));
+    this.closeSheet();
+  };
+  toggleStatusFromDetail = () => {
+    this.setState((s) => ({ rules: s.rules.map((r) => r.id === s.sheet.id ? { ...r, status: r.status === 'Ativa' ? 'Inativa' : 'Ativa', updatedAt: this.today() } : r) }));
+  };
+  openConsultaFromDetail = () => { this.setState({ sheet: { type: 'consulta' }, consultaQuery: '', consultaSelectedId: null }); };
+
+  // ---- Regras filters ----
+  onRegrasSearchChange = (v) => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, search: v } }));
+  onRegrasStatusChange = (v) => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, status: v } }));
+  onRegrasProductChange = (v) => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, product: v } }));
+  onRegrasCrFilterChange = (v) => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, cr: v } }));
+  onRegrasFuncFilterChange = (v) => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, func: v } }));
+  openRegrasMoreFilters = () => this.setState({ sheet: { type: 'moreFilters', target: 'regras' } });
+  clearRegrasMoreFilters = () => this.setState((s) => ({ regrasFilter: { ...s.regrasFilter, cr: [], func: [] } }));
+  clearRegrasFilters = () => this.setState({ regrasFilter: { search: '', status: [], product: [], cr: [], func: [] } });
+
+  // ---- Exceções filters ----
+  onExcSearchChange = (v) => this.setState((s) => ({ excFilter: { ...s.excFilter, search: v } }));
+  onExcStatusChange = (v) => this.setState((s) => ({ excFilter: { ...s.excFilter, status: v } }));
+  onExcProductFilterChange = (v) => this.setState((s) => ({ excFilter: { ...s.excFilter, product: v } }));
+  clearExcFilters = () => this.setState({ excFilter: { search: '', status: [], product: [] } });
+
+  // ---- Exception form ----
+  blankExcForm() { return { userName: this.state.users[0].name, userId: this.state.users[0].id, product: PRODUCTS[0], vigencia: { preset: 'custom', start: '', end: '' }, justification: '' }; }
+  openNewException = () => this.setState({ sheet: { type: 'exceptionForm' }, excForm: this.blankExcForm() });
+  onExcUserChange = (v) => { const u = this.state.users.find((x) => x.name === v); this.setState((s) => ({ excForm: { ...s.excForm, userName: v, userId: u ? u.id : s.excForm.userId } })); };
+  onExcProductChange = (v) => this.setState((s) => ({ excForm: { ...s.excForm, product: v } }));
+  onExcVigenciaChange = (v) => this.setState((s) => ({ excForm: { ...s.excForm, vigencia: v } }));
+  onExcJustificationChange = (e) => this.setState((s) => ({ excForm: { ...s.excForm, justification: e.target.value } }));
+  saveExceptionForm = () => {
+    const f = this.state.excForm;
+    if (!f.vigencia.start || !f.vigencia.end) return;
+    this.setState((s) => ({ exceptions: [...s.exceptions, { id: 'ex' + Date.now(), userId: f.userId, product: f.product, start: f.vigencia.start, end: f.vigencia.end, justification: f.justification, createdBy: 'Ana Ferreira', createdAt: this.today(), revoked: false }] }));
+    this.closeSheet();
+  };
+
+  openExceptionDetail = (exc, editMode) => this.setState({ sheet: { type: 'exceptionDetail', id: exc.id }, excEditingVigencia: !!editMode, excEditForm: { vigencia: { preset: 'custom', start: exc.start, end: exc.end } } });
+  startEditVigencia = () => { const exc = this.state.exceptions.find((x) => x.id === this.state.sheet.id); this.setState({ excEditingVigencia: true, excEditForm: { vigencia: { preset: 'custom', start: exc.start, end: exc.end } } }); };
+  cancelEditVigencia = () => this.setState({ excEditingVigencia: false });
+  onExcEditVigenciaChange = (v) => this.setState((s) => ({ excEditForm: { ...s.excEditForm, vigencia: v } }));
+  saveEditVigencia = () => {
+    const id = this.state.sheet.id; const v = this.state.excEditForm.vigencia;
+    this.setState((s) => ({ exceptions: s.exceptions.map((e) => e.id === id ? { ...e, start: v.start || e.start, end: v.end || e.end, updatedBy: 'Ana Ferreira', updatedAt: this.today() } : e), excEditingVigencia: false }));
+  };
+  revokeFromDetail = () => {
+    if (!window.confirm('Revogar esta exceção?')) return;
+    const id = this.state.sheet.id;
+    this.setState((s) => ({ exceptions: s.exceptions.map((e) => e.id === id ? { ...e, revoked: true, revokedBy: 'Ana Ferreira', revokedAt: this.today() } : e) }));
+  };
+  revokeException = (id) => { if (window.confirm('Revogar esta exceção?')) this.setState((s) => ({ exceptions: s.exceptions.map((e) => e.id === id ? { ...e, revoked: true, revokedBy: 'Ana Ferreira', revokedAt: this.today() } : e) })); };
+
+  // ---- Consulta ----
+  openConsulta = () => this.setState({ sheet: { type: 'consulta' }, consultaQuery: '', consultaSelectedId: null });
+  onConsultaQueryChange = (e) => this.setState({ consultaQuery: e.target.value, consultaSelectedId: null });
+  selectConsultaUser = (id) => this.setState({ consultaSelectedId: id });
+  resetConsulta = () => this.setState({ consultaQuery: '', consultaSelectedId: null });
+
+  // ---- Administradores ----
+  openAddAdmin = () => this.setState({ sheet: { type: 'adminForm', mode: 'add' }, adminForm: emptyAdminForm() });
+  openEditAdmin = (admin) => this.setState({ sheet: { type: 'adminForm', mode: 'edit', id: admin.id }, adminForm: { name: admin.name, initials: admin.initials, perfil: admin.perfil, escopo: admin.escopo, currentPerfilLabel: admin.perfil } });
+  switchToNameSearch = () => this.setState((s) => ({ adminForm: { ...s.adminForm, searchByName: true, matricula: '' } }));
+  switchToMatriculaSearch = () => this.setState((s) => ({ adminForm: { ...s.adminForm, searchByName: false, nameQuery: '' } }));
+  onAdminMatriculaChange = (e) => this.setState((s) => ({ adminForm: { ...emptyAdminForm(), searchByName: false, matricula: e.target.value } }));
+  onAdminNameQueryChange = (e) => this.setState((s) => ({ adminForm: { ...s.adminForm, nameQuery: e.target.value, searchState: undefined, foundUser: null } }));
+  onMatriculaSubmit = (e) => { e.preventDefault(); this.searchByMatricula(); };
+  lookupUserByMatricula = (matricula) => this.state.users.find((u) => u.matricula === (matricula || '').trim());
+  applyFoundUser = (u) => {
+    const existingAdmin = this.state.admins.find((a) => a.name === u.name);
+    if (u.status !== 'Ativo') {
+      this.setState((s) => ({ adminForm: { ...s.adminForm, foundUser: u, searchState: 'inactive', name: u.name, initials: u.initials } }));
+      return;
+    }
+    if (existingAdmin) {
+      this.setState((s) => ({ adminForm: { ...s.adminForm, foundUser: u, searchState: 'existing', name: u.name, initials: u.initials, existingPerfil: existingAdmin.perfil, existingAdminId: existingAdmin.id } }));
+      return;
+    }
+    this.setState((s) => ({ adminForm: {
+      ...s.adminForm, foundUser: u, searchState: 'found', name: u.name, initials: u.initials, email: u.email, matricula: u.matricula,
+      crLabel: u.crs.join(', '), funcao: u.funcao, status: u.status, perfil: '', escopo: '',
+    } }));
+  };
+  searchByMatricula = () => {
+    const u = this.lookupUserByMatricula(this.state.adminForm.matricula);
+    if (!u) { this.setState((s) => ({ adminForm: { ...s.adminForm, searchState: 'notfound', foundUser: null } })); return; }
+    this.applyFoundUser(u);
+  };
+  selectNameResult = (u) => this.setState((s) => ({ adminForm: { ...s.adminForm, matricula: u.matricula }, }), () => this.applyFoundUser(u));
+  switchToEditExisting = () => {
+    const admin = this.state.admins.find((a) => a.id === this.state.adminForm.existingAdminId);
+    if (admin) this.setState({ sheet: { type: 'adminForm', mode: 'edit', id: admin.id }, adminForm: { name: admin.name, initials: admin.initials, perfil: admin.perfil, escopo: admin.escopo, currentPerfilLabel: admin.perfil } });
+  };
+  onAdminPerfilChange = (v) => this.setState((s) => ({ adminForm: { ...s.adminForm, perfil: v, escopo: ADMIN_SCOPE_MAP[v] || '' } }));
+  saveAdminForm = () => {
+    const f = this.state.adminForm; const sheet = this.state.sheet;
+    const now = '26/08/2026';
+    if (sheet.mode === 'edit') {
+      this.setState((s) => ({
+        admins: s.admins.map((a) => a.id === sheet.id ? { ...a, perfil: f.perfil, escopo: ADMIN_SCOPE_MAP[f.perfil] || a.escopo, updatedAt: now, previousPerfil: a.perfil, changedBy: 'Ana Ferreira', changedAt: now } : a),
+        sheet: null, adminForm: null,
+      }));
+      return;
+    }
+    if (!f.foundUser || !f.perfil) return;
+    const newAdmin = { id: 'ad' + Date.now(), name: f.name, initials: f.initials, matricula: f.matricula, perfil: f.perfil, escopo: f.escopo, status: 'Ativo', updatedAt: now, createdBy: 'Ana Ferreira', createdAt: now };
+    this.setState((s) => ({ admins: [...s.admins, newAdmin], sheet: null, adminForm: null }));
+  };
+  removeAdmin = (admin) => { if (window.confirm('Remover o privilégio administrativo de ' + admin.name + '?')) this.setState((s) => ({ admins: s.admins.filter((a) => a.id !== admin.id) })); };
+
+  buildProductRows(u) {
+    const ns = this.ns();
+    const accessStatus = (label, state) => React.createElement(ns.AccessStatus, { label, state });
+    return PRODUCTS.map((p) => {
+      const res = this.evaluateAccess(u, p);
+      let explanation = 'Motivo: nenhuma regra ou exceção corresponde ao CR/FUNCAORM atual.';
+      let statusEl = accessStatus('Restrito', 'restricted');
+      if (res.authorized && res.origin === 'rule') {
+        statusEl = accessStatus('Autorizado', 'authorized');
+        explanation = 'Origem: Regra estrutural "' + res.rule.name + '". Correspondência: CR ' + res.crMatch + ', FUNCAORM ' + res.funcMatch + '.';
+      } else if (res.authorized && res.origin === 'exception') {
+        statusEl = accessStatus('Autorizado', 'authorized');
+        explanation = 'Origem: Exceção individual, criada por ' + res.exception.createdBy + '. Válida até ' + res.exception.end + '.';
+      }
+      return { product: p, statusEl, explanation };
+    });
+  }
+
+  renderVals() {
+    const ns = this.ns();
+    const tab = this.state.tab;
+    const users = this.state.users;
+    const rules = this.state.rules;
+    const exceptions = this.state.exceptions;
+    const admins = this.state.admins;
+
+    const statusBadge = (label, tone) => React.createElement(ns.StatusBadge, { label, tone });
+    const avatarCell = (name, initials) => React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 } },
+      React.createElement(ns.IdentityAvatar, { content: 'initials', initials, size: 'sm' }),
+      React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, name));
+    const summaryCell = (list, mode, anyLabel) => {
+      if (mode === 'any') return React.createElement('span', { style: { fontSize: 13, color: 'var(--color-text-secondary)' } }, anyLabel);
+      const shown = list.slice(0, 2).join(', ');
+      const extra = list.length > 2 ? ' +' + (list.length - 2) : '';
+      return React.createElement('span', { title: list.join(', '), style: { fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' } }, (shown + extra) || '—');
+    };
+    const dataState = (text1, text2) => React.createElement(ns.DataDataState, { type: 'noresults', text1, text2 });
+
+    // ---- Regras tab ----
+    const rf = this.state.regrasFilter;
+    const filteredRules = rules.filter((r) =>
+      (!rf.search || r.name.toLowerCase().includes(rf.search.toLowerCase())) &&
+      (!rf.status.length || rf.status.includes(r.status)) &&
+      (!rf.product.length || rf.product.includes(r.product)) &&
+      (!rf.cr.length || r.crMode === 'any' || r.crList.some((c) => rf.cr.includes(c))) &&
+      (!rf.func.length || r.funcMode === 'any' || r.funcList.some((f) => rf.func.includes(f)))
+    );
+    const regrasFilterChips = [
+      ...(rf.search ? [{ label: 'Busca', value: rf.search, onRemove: () => this.onRegrasSearchChange('') }] : []),
+      ...rf.status.map((v) => ({ label: 'Status', value: v, onRemove: () => this.onRegrasStatusChange(rf.status.filter((x) => x !== v)) })),
+      ...rf.product.map((v) => ({ label: 'Produto', value: v, onRemove: () => this.onRegrasProductChange(rf.product.filter((x) => x !== v)) })),
+      ...rf.cr.map((v) => ({ label: 'CR', value: v, onRemove: () => this.onRegrasCrFilterChange(rf.cr.filter((x) => x !== v)) })),
+      ...rf.func.map((v) => ({ label: 'FUNCAORM', value: v, onRemove: () => this.onRegrasFuncFilterChange(rf.func.filter((x) => x !== v)) })),
+    ];
+    const regrasHasFilters = regrasFilterChips.length > 0;
+
+    const ruleColumns = [
+      { key: 'name', header: 'Regra', minWidth: 190 },
+      { key: 'product', header: 'Produto', minWidth: 150 },
+      { key: 'cr', header: 'CR', render: (r) => summaryCell(r.crList, r.crMode, 'Qualquer CR'), minWidth: 150 },
+      { key: 'func', header: 'FUNCAORM', render: (r) => summaryCell(r.funcList, r.funcMode, 'Qualquer função'), minWidth: 160 },
+      { key: 'status', header: 'Status', render: (r) => statusBadge(r.status, r.status === 'Ativa' ? 'positive' : 'neutral'), minWidth: 100 },
+      { key: 'updatedAt', header: 'Atualizado', mono: true, minWidth: 110 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (r) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Editar', onClick: () => this.openEditRule(r) },
+        { label: 'Duplicar', onClick: () => { const copy = { ...r, id: 'ru' + Date.now(), name: r.name + ' (cópia)', status: 'Inativa', updatedAt: this.today(), createdAt: this.today() }; this.setState((s) => ({ rules: [...s.rules, copy] })); } },
+        { label: r.status === 'Ativa' ? 'Desativar' : 'Ativar', tone: r.status === 'Ativa' ? 'negative' : 'default', onClick: () => this.setState((s) => ({ rules: s.rules.map((x) => x.id === r.id ? { ...x, status: x.status === 'Ativa' ? 'Inativa' : 'Ativa', updatedAt: this.today() } : x) })) },
+      ] }) },
+    ];
+
+    // ---- Exceções tab ----
+    const ef = this.state.excFilter;
+    const excStatusTone = { 'Ativa': 'positive', 'Agendada': 'info', 'Expirada': 'neutral', 'Revogada': 'negative' };
+    const exceptionRowsAll = exceptions.map((e) => ({ ...e, user: users.find((u) => u.id === e.userId), computedStatus: this.excStatus(e) })).filter((e) => e.user);
+    const filteredExceptions = exceptionRowsAll.filter((e) =>
+      (!ef.search || e.user.name.toLowerCase().includes(ef.search.toLowerCase()) || e.product.toLowerCase().includes(ef.search.toLowerCase())) &&
+      (!ef.status.length || ef.status.includes(e.computedStatus)) &&
+      (!ef.product.length || ef.product.includes(e.product))
+    );
+    const excFilterChips = [
+      ...(ef.search ? [{ label: 'Busca', value: ef.search, onRemove: () => this.onExcSearchChange('') }] : []),
+      ...ef.status.map((v) => ({ label: 'Status', value: v, onRemove: () => this.onExcStatusChange(ef.status.filter((x) => x !== v)) })),
+      ...ef.product.map((v) => ({ label: 'Produto', value: v, onRemove: () => this.onExcProductFilterChange(ef.product.filter((x) => x !== v)) })),
+    ];
+    const excHasFilters = excFilterChips.length > 0;
+    const exceptionColumns = [
+      { key: 'user', header: 'Usuário', render: (e) => avatarCell(e.user.name, e.user.initials), minWidth: 190 },
+      { key: 'product', header: 'Produto', minWidth: 150 },
+      { key: 'cr', header: 'CR atual', render: (e) => summaryCell(e.user.crs, 'list', ''), mono: true, minWidth: 130 },
+      { key: 'funcao', header: 'FUNCAORM', render: (e) => e.user.funcao, minWidth: 120 },
+      { key: 'vigencia', header: 'Vigência', mono: true, minWidth: 160, render: (e) => e.start + ' — ' + e.end },
+      { key: 'status', header: 'Status', minWidth: 100, render: (e) => statusBadge(e.computedStatus, excStatusTone[e.computedStatus]) },
+      { key: 'createdBy', header: 'Criado por', minWidth: 130 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (e) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Ver detalhes', onClick: () => this.openExceptionDetail(e, false) },
+        { label: 'Editar vigência', disabled: e.computedStatus === 'Revogada', onClick: () => this.openExceptionDetail(e, true) },
+        { label: 'Revogar', tone: 'negative', disabled: e.computedStatus === 'Revogada', onClick: () => this.revokeException(e.id) },
+      ] }) },
+    ];
+
+    // ---- Administradores tab ----
+    const adminColumns = [
+      { key: 'name', header: 'Administrador', render: (a) => avatarCell(a.name, a.initials), minWidth: 190 },
+      { key: 'perfil', header: 'Perfil', render: (a) => React.createElement(ns.AccessPermissionChip, { label: a.perfil, style: { width: 'auto' } }), minWidth: 160 },
+      { key: 'escopo', header: 'Escopo', minWidth: 140 },
+      { key: 'status', header: 'Status', minWidth: 100, render: (a) => statusBadge(a.status, a.status === 'Ativo' ? 'positive' : 'neutral') },
+      { key: 'updatedAt', header: 'Última atualização', mono: true, minWidth: 130 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (a) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Alterar perfil', onClick: () => this.openEditAdmin(a) },
+        { label: 'Remover privilégio', tone: 'negative', onClick: () => this.removeAdmin(a) },
+      ] }) },
+    ];
+
+    // ---- Overview ----
+    const activeRulesArr = rules.filter((r) => r.status === 'Ativa');
+    const productsWithRules = new Set(activeRulesArr.map((r) => r.product)).size;
+    const activeExceptionsArr = exceptions.filter((e) => this.excStatus(e) === 'Ativa');
+    const scheduledOrExpired = exceptions.filter((e) => { const st = this.excStatus(e); return st === 'Agendada' || st === 'Expirada'; }).length;
+    const expiringExceptions = activeExceptionsArr.slice().sort((a, b) => this.parseDate(a.end) - this.parseDate(b.end)).slice(0, 3).map((e) => ({ ...e, userName: (users.find((u) => u.id === e.userId) || {}).name || '—' }));
+    const productsWithoutRule = PRODUCTS.filter((p) => !rules.some((r) => r.product === p && r.status === 'Ativa'));
+
+    // ---- Sheets ----
+    const sheet = this.state.sheet;
+    const form = this.state.form || this.blankRuleForm();
+    const summary = this.computeSummary(form);
+    let ruleDetail = {};
+    if (sheet && sheet.type === 'ruleDetail') {
+      const r = rules.find((x) => x.id === sheet.id) || {};
+      ruleDetail = {
+        name: r.name, product: r.product, createdBy: r.createdBy, createdAt: r.createdAt, updatedAt: r.updatedAt,
+        statusEl: statusBadge(r.status, r.status === 'Ativa' ? 'positive' : 'neutral'),
+        crLabel: r.crMode === 'any' ? 'Qualquer CR' : (r.crList || []).join(', '),
+        funcLabel: r.funcMode === 'any' ? 'Qualquer função' : (r.funcList || []).join(', '),
+        logic: r.crMode === 'any' && r.funcMode === 'any' ? 'Todos os usuários' : (r.crMode !== 'any' && r.funcMode !== 'any' ? 'CR E FUNCAORM' : (r.crMode !== 'any' ? 'Somente CR' : 'Somente FUNCAORM')),
+        vigenciaLabel: r.vigenciaLabel || 'Sem prazo definido',
+        toggleLabel: r.status === 'Ativa' ? 'Desativar' : 'Ativar',
+      };
+    }
+    let excDetail = {};
+    if (sheet && sheet.type === 'exceptionDetail') {
+      const e = exceptions.find((x) => x.id === sheet.id) || {};
+      const u = users.find((x) => x.id === e.userId) || {};
+      const st = this.excStatus(e);
+      const auditParts = [];
+      if (e.updatedBy) auditParts.push('Alterado por ' + e.updatedBy + ' em ' + e.updatedAt);
+      if (e.revokedBy) auditParts.push('Revogado por ' + e.revokedBy + ' em ' + e.revokedAt);
+      excDetail = {
+        userName: u.name, product: e.product, crLabel: (u.crs || []).join(', '), funcao: u.funcao,
+        createdBy: e.createdBy, createdAt: e.createdAt, justification: e.justification,
+        vigenciaLabel: e.start + ' — ' + e.end, statusEl: statusBadge(st, excStatusTone[st]),
+        revokeState: st === 'Revogada' ? 'disabled' : 'default',
+        hasAudit: auditParts.length > 0, auditLine: auditParts.join(' · '),
+      };
+    }
+    const excForm = this.state.excForm || this.blankExcForm();
+    const excEditForm = this.state.excEditForm || { vigencia: { preset: 'custom', start: '', end: '' } };
+
+    const consultaQuery = this.state.consultaQuery;
+    const q = consultaQuery.trim().toLowerCase();
+    const consultaResults = q ? users.filter((u) => u.name.toLowerCase().includes(q) || u.matricula.includes(q) || u.email.toLowerCase().includes(q)).slice(0, 5).map((u) => ({ ...u, onSelect: () => this.selectConsultaUser(u.id) })) : [];
+    const consultaUserRaw = this.state.consultaSelectedId ? users.find((u) => u.id === this.state.consultaSelectedId) : null;
+    const consultaUser = consultaUserRaw ? { ...consultaUserRaw, crLabel: consultaUserRaw.crs.join(', '), productRows: this.buildProductRows(consultaUserRaw) } : {};
+
+    const adminForm = this.state.adminForm || emptyAdminForm();
+    const nameQ = (adminForm.nameQuery || '').trim().toLowerCase();
+    const nameMatches = nameQ ? users.filter((u) => u.name.toLowerCase().includes(nameQ) || u.email.toLowerCase().includes(nameQ)) : [];
+    const adminNameResults = nameMatches.map((u) => ({ name: u.name, email: u.email, initials: u.initials, matricula: u.matricula, onSelect: () => this.selectNameResult(u) }));
+
+    return {
+      tabs: [
+        { id: 'overview', label: 'Overview' },
+        { id: 'regras', label: 'Regras de acesso' },
+        { id: 'excecoes', label: 'Exceções' },
+        { id: 'administradores', label: 'Administradores' },
+      ],
+      activeTab: tab, setTab: this.setTab,
+      isOverview: tab === 'overview', isRegras: tab === 'regras', isExcecoes: tab === 'excecoes', isAdministradores: tab === 'administradores',
+
+      kpis: [
+        { label: 'Produtos com regras', value: productsWithRules + ' de ' + PRODUCTS.length, secondary: PRODUCTS.length - productsWithRules + ' sem regra', tone: 'neutral' },
+        { label: 'Regras ativas', value: String(activeRulesArr.length), secondary: (rules.length - activeRulesArr.length) + ' inativa(s)', tone: 'positive' },
+        { label: 'Exceções ativas', value: String(activeExceptionsArr.length), secondary: scheduledOrExpired + ' futuras/expiradas', tone: 'warning' },
+        { label: 'Produtos sem regra', value: String(productsWithoutRule.length), secondary: productsWithoutRule.length ? productsWithoutRule.join(', ') : 'nenhum', tone: productsWithoutRule.length ? 'warning' : 'positive' },
+      ],
+      recentChanges: [
+        { label: 'Regra "Planejamento Claro" atualizada', detail: 'CR 31005 adicionado', date: '26/08/2026', by: 'Ana Ferreira' },
+        { label: 'Exceção concedida a Camila Nunes', detail: 'Banco de Horas até 30/09/2026', date: '24/08/2026', by: 'Ana Ferreira' },
+        { label: 'Regra "Coordenação Nacional" desativada', detail: 'Painel de Clientes', date: '02/07/2026', by: 'Rafael Lima' },
+      ],
+      expiringExceptions, noExpiringExceptions: expiringExceptions.length === 0,
+      productsWithoutRule, allProductsHaveRules: productsWithoutRule.length === 0,
+      openConsulta: this.openConsulta, openNewRule: this.openNewRule, openNewException: this.openNewException,
+
+      ruleStatusOptions: ['Ativa', 'Inativa'],
+      exceptionStatusOptions: ['Ativa', 'Agendada', 'Expirada', 'Revogada'],
+      productOptions: PRODUCTS,
+
+      regrasFilter: rf, regrasFilterChips, regrasHasFilters, clearRegrasFilters: this.clearRegrasFilters,
+      onRegrasSearchChange: this.onRegrasSearchChange, onRegrasStatusChange: this.onRegrasStatusChange, onRegrasProductChange: this.onRegrasProductChange,
+      onRegrasCrFilterChange: this.onRegrasCrFilterChange, onRegrasFuncFilterChange: this.onRegrasFuncFilterChange, openRegrasMoreFilters: this.openRegrasMoreFilters, clearRegrasMoreFilters: this.clearRegrasMoreFilters,
+      ruleColumns, filteredRules, rulesEmptyState: dataState('Nenhuma regra encontrada', 'Ajuste os filtros ou crie uma nova regra.'),
+      onRuleRowClick: this.onRuleRowClick,
+
+      excFilter: ef, excFilterChips, excHasFilters, clearExcFilters: this.clearExcFilters,
+      onExcSearchChange: this.onExcSearchChange, onExcStatusChange: this.onExcStatusChange, onExcProductFilterChange: this.onExcProductFilterChange,
+      exceptionColumns, filteredExceptions, excEmptyState: dataState('Nenhuma exceção encontrada', 'Ajuste os filtros ou crie uma nova exceção.'),
+
+      adminColumns, admins, openAddAdmin: this.openAddAdmin,
+
+      // rule form sheet
+      isRuleFormOpen: !!sheet && sheet.type === 'ruleForm',
+      ruleFormTitle: sheet && sheet.mode === 'edit' ? 'Editar regra' : 'Nova regra',
+      form, crOptions: CR_OPTIONS, funcOptions: FUNC_OPTIONS,
+      crModeIsList: form.crMode === 'list', crModeIsAny: form.crMode === 'any',
+      funcModeIsList: form.funcMode === 'list', funcModeIsAny: form.funcMode === 'any',
+      crModeListStyle: form.crMode === 'list' ? 'primary' : 'secondary', crModeAnyStyle: form.crMode === 'any' ? 'primary' : 'secondary',
+      funcModeListStyle: form.funcMode === 'list' ? 'primary' : 'secondary', funcModeAnyStyle: form.funcMode === 'any' ? 'primary' : 'secondary',
+      onFormNameChange: this.onFormNameChange, onFormProductChange: this.onFormProductChange,
+      setCrModeList: this.setCrModeList, setCrModeAny: this.setCrModeAny, onFormCrListChange: this.onFormCrListChange,
+      setFuncModeList: this.setFuncModeList, setFuncModeAny: this.setFuncModeAny, onFormFuncListChange: this.onFormFuncListChange,
+      onToggleVigencia: this.onToggleVigencia, onFormVigenciaChange: this.onFormVigenciaChange, onToggleActive: this.onToggleActive,
+      summary, saveRuleForm: this.saveRuleForm, saveRuleState: (form.name.trim() && form.product) ? 'default' : 'disabled',
+
+      // rule detail sheet
+      isRuleDetailOpen: !!sheet && sheet.type === 'ruleDetail', ruleDetail,
+      editFromDetail: this.editFromDetail, duplicateFromDetail: this.duplicateFromDetail, toggleStatusFromDetail: this.toggleStatusFromDetail, openConsultaFromDetail: this.openConsultaFromDetail,
+
+      // more filters sheet
+      isMoreFiltersOpen: !!sheet && sheet.type === 'moreFilters',
+
+      // exception form sheet
+      isExceptionFormOpen: !!sheet && sheet.type === 'exceptionForm', excForm,
+      userNameOptions: users.map((u) => u.name),
+      onExcUserChange: this.onExcUserChange, onExcProductChange: this.onExcProductChange, onExcVigenciaChange: this.onExcVigenciaChange,
+      onExcJustificationChange: this.onExcJustificationChange,
+      saveExceptionForm: this.saveExceptionForm, saveExcState: (excForm.vigencia.start && excForm.vigencia.end) ? 'default' : 'disabled',
+
+      // exception detail sheet
+      isExceptionDetailOpen: !!sheet && sheet.type === 'exceptionDetail', excDetail,
+      excEditingVigencia: this.state.excEditingVigencia, excNotEditingVigencia: !this.state.excEditingVigencia, excEditForm,
+      startEditVigencia: this.startEditVigencia, cancelEditVigencia: this.cancelEditVigencia, onExcEditVigenciaChange: this.onExcEditVigenciaChange, saveEditVigencia: this.saveEditVigencia, revokeFromDetail: this.revokeFromDetail,
+
+      // consulta sheet
+      isConsultaOpen: !!sheet && sheet.type === 'consulta', consultaQuery, onConsultaQueryChange: this.onConsultaQueryChange,
+      consultaShowResults: !!q && !this.state.consultaSelectedId, consultaResults, consultaNoResults: !!q && consultaResults.length === 0,
+      consultaHasSelection: !!consultaUserRaw, consultaUser, resetConsulta: this.resetConsulta,
+
+      // admin form sheet
+      isAdminFormOpen: !!sheet && sheet.type === 'adminForm', adminForm, adminFormTitle: sheet && sheet.mode === 'edit' ? 'Alterar perfil administrativo' : 'Adicionar administrador',
+      adminFormIsNew: !!sheet && sheet.mode === 'add', adminFormIsEdit: !!sheet && sheet.mode === 'edit',
+      adminProfileOptions: ADMIN_PROFILES, onAdminPerfilChange: this.onAdminPerfilChange, saveAdminForm: this.saveAdminForm,
+      adminSearchByName: !!adminForm.searchByName, onAdminMatriculaChange: this.onAdminMatriculaChange, onAdminNameQueryChange: this.onAdminNameQueryChange,
+      onMatriculaSubmit: this.onMatriculaSubmit, searchByMatricula: this.searchByMatricula, switchToNameSearch: this.switchToNameSearch, switchToMatriculaSearch: this.switchToMatriculaSearch,
+      adminNameResults, adminNameHasResults: !!adminForm.searchByName && nameQ.length > 0 && adminNameResults.length > 0, adminNameNoResults: !!adminForm.searchByName && nameQ.length > 0 && adminNameResults.length === 0,
+      adminShowNotFound: adminForm.searchState === 'notfound', adminShowInactive: adminForm.searchState === 'inactive', adminShowExisting: adminForm.searchState === 'existing',
+      adminShowSummary: adminForm.searchState === 'found', switchToEditExisting: this.switchToEditExisting,
+      adminSaveState: (adminForm.searchState === 'found' && adminForm.perfil) ? 'default' : 'disabled',
+
+      closeSheet: this.closeSheet, stopClick: this.stopClick,
+
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      noop: this.noop,
+      sidebarCollapsed: this.state.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: this.state.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        this.state.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: this.goProducts },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), active: true },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

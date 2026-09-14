@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="Admin · Detalhe do produto" description="Detalhe administrativo (rota /admin/produtos/:productId) — Geral/Responsáveis/Acesso/Conteúdo/Publicações/Saúde, aba sincronizada via ?tab=" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;flex-wrap:wrap">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="260px,24px"></x-import>
+<sc-if value="{{ showPublicLink }}" hint-placeholder-val="{{ false }}">
+<span onclick="{{ goCatalog }}" style="font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--color-text-link);cursor:pointer;white-space:nowrap">{{ publicActionLabel }}</span>
+</sc-if>
+</div>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductDetailHeader" name="{{ productName }}" description="{{ productDescription }}" logoFallback="{{ productInitials }}" statusMode="lifecycle" lifecycleTone="{{ lifecycleTone }}" statusLabel="{{ statusLabel }}" category="{{ categoryKey }}" categoryLabel="{{ categoryLabel }}" tags="{{ tags }}" metadata="{{ metadata }}" showFavorite="{{ false }}" primaryLabel="{{ primaryLabel }}" onPrimaryAction="{{ primaryAction }}" showSecondaryAction="{{ showSecondaryAction }}" secondaryLabel="{{ secondaryLabel }}" onSecondaryAction="{{ secondaryAction }}" style="width:100%" hint-size="100%,196px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationTabGroup" tabs="{{ tabs }}" activeId="{{ activeTab }}" onSelect="{{ setTab }}" style="width:100%" hint-size="100%,44px"></x-import>
+
+<sc-if value="{{ isGeral }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:20px;width:100%;min-width:0;align-items:flex-start">
+<section style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:4px;background:var(--color-surface-card);border-radius:16px;padding:20px 24px 12px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Informações do produto</h2>
+<sc-for list="{{ generalInfo }}" as="row" hint-placeholder-count="8">
+<div style="width:100%;min-width:0;border-bottom:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="{{ row.label }}" value="{{ row.value }}" valueType="{{ row.valueType }}" orientation="horizontal" style="width:100%;height:auto" hint-size="100%,40px"></x-import>
+</div>
+</sc-for>
+</section>
+<section style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Recursos do produto</h2>
+<sc-for list="{{ resources }}" as="r" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductResourceLinkRow" title="{{ r.title }}" description="{{ r.description }}" external="{{ r.external }}" state="default" style="width:100%;min-width:0" hint-size="100%,88px"></x-import>
+</sc-for>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{ isResponsaveis }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;width:100%;min-width:0">
+<sc-for list="{{ owners }}" as="o" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductOwnerCard" role="{{ o.role }}" name="{{ o.name }}" secondaryInfo="{{ o.area }}" showContactAction="{{ true }}" onContact="{{ o.onContact }}" style="width:100%;min-width:0" hint-size="100%,92px"></x-import>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAcesso }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:24px;width:100%;min-width:0">
+
+<section style="display:flex;flex-direction:column;gap:12px;width:100%;min-width:0">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0;max-width:640px">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Regras de acesso</h2>
+<span style="font-size:13px;line-height:1.5;color:var(--color-text-muted)">Acesso ao conteúdo é determinado por CR + FUNCAORM, a partir do Hominum. Esta aba é uma visão contextual — a gestão completa fica em Admin · Acessos.</span>
+</div>
+<div style="display:flex;gap:8px;flex-shrink:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Ver todas as regras" size="compact" style2="secondary" onClick="{{ goAllRules }}" hint-size="140px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova regra" size="compact" style2="primary" onClick="{{ goNewRule }}" hint-size="100px,36px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ ruleColumns }}" rows="{{ rulesForProduct }}" density="standard" hoverable="{{ false }}" empty="{{ rulesEmptyState }}" style="width:100%" hint-size="100%,220px"></x-import>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px;width:100%;min-width:0">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Exceções</h2>
+<div style="display:flex;gap:8px;flex-shrink:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Ver todas as exceções" size="compact" style2="secondary" onClick="{{ goAllExceptions }}" hint-size="160px,36px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Nova exceção" size="compact" style2="primary" onClick="{{ goNewException }}" hint-size="120px,36px"></x-import>
+</div>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ exceptionColumns }}" rows="{{ exceptionsForProduct }}" density="standard" hoverable="{{ false }}" empty="{{ exceptionsEmptyState }}" style="width:100%" hint-size="100%,180px"></x-import>
+</section>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isConteudo }}" hint-placeholder-val="{{ false }}">
+<section style="width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;background:var(--color-surface-card);border-radius:16px;padding:20px 24px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 8px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">{{ contentTypeLabel }}</h2>
+<sc-for list="{{ contentInfo }}" as="row" hint-placeholder-count="6">
+<div style="width:100%;min-width:0;border-bottom:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="{{ row.label }}" value="{{ row.value }}" valueType="{{ row.valueType }}" orientation="horizontal" style="width:100%;height:auto" hint-size="100%,40px"></x-import>
+</div>
+</sc-for>
+<div style="display:flex;gap:10px;margin-top:16px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ contentSecondaryActionLabel }}" style2="secondary" onClick="{{ contentSecondaryAction }}" hint-size="150px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ contentPrimaryActionLabel }}" style2="primary" onClick="{{ contentPrimaryAction }}" hint-size="150px,40px"></x-import>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isPublicacoes }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ hasNoPublication }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;padding:32px 0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Nenhuma publicação realizada" text2="Este produto ainda não foi colocado no Nexo." style="width:100%;max-width:420px" hint-size="420px,190px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Publicar produto" style2="primary" onClick="{{ goPublish }}" hint-size="150px,40px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ hasPublication }}" hint-placeholder-val="{{ true }}">
+<section style="width:100%;min-width:0;display:flex;flex-direction:column;gap:4px;background:var(--color-surface-card);border-radius:16px;padding:20px 24px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 8px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Publicação atual</h2>
+<sc-for list="{{ currentPublicationInfo }}" as="row" hint-placeholder-count="4">
+<div style="width:100%;min-width:0;border-bottom:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="{{ row.label }}" value="{{ row.value }}" valueType="{{ row.valueType }}" orientation="horizontal" style="width:100%;height:auto" hint-size="100%,40px"></x-import>
+</div>
+</sc-for>
+<div style="display:flex;gap:10px;margin-top:16px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Ver todas as publicações" style2="secondary" onClick="{{ goAllPublications }}" hint-size="180px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Publicar atualização" style2="primary" onClick="{{ goPublish }}" hint-size="170px,40px"></x-import>
+</div>
+</section>
+<section style="width:100%;min-width:0;display:flex;flex-direction:column;gap:8px">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Histórico recente</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ historyColumns }}" rows="{{ historyRows }}" density="standard" hoverable="{{ false }}" style="width:100%" hint-size="100%,220px"></x-import>
+</section>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ isSaude }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ hasNoPublication }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:center;width:100%;padding:24px 0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Sem dados de saúde" text2="Indicadores de saúde só existem após a primeira publicação no Nexo." style="width:100%;max-width:420px" hint-size="420px,190px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ hasPublication }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ healthColumns }}" rows="{{ healthRows }}" density="standard" hoverable="{{ false }}" style="width:100%" hint-size="100%,260px"></x-import>
+</sc-if>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, tab: 'geral', ruleOverrides: {} };
+
+  statesData = {
+    draft: { label: 'Rascunho', tone: 'neutral' },
+    homologation: { label: 'Homologação', tone: 'info' },
+    active: { label: 'Ativo', tone: 'positive' },
+    maintenance: { label: 'Manutenção', tone: 'warning' },
+    deprecated: { label: 'Descontinuado', tone: 'negative' },
+    archived: { label: 'Arquivado', tone: 'neutral' },
+  };
+
+  categoriesData = [
+    { key: 'operacional', label: 'Operacional' },
+    { key: 'planejamento', label: 'Planejamento' },
+    { key: 'financeiro', label: 'Financeiro' },
+    { key: 'gestão', label: 'Gestão' },
+    { key: 'clientes', label: 'Clientes' },
+    { key: 'dados & inteligência', label: 'Dados & Inteligência' },
+  ];
+
+  contentTypeLabels = { nexo: 'Projeto Nexo', powerbi: 'Power BI' };
+
+  catalog = {
+    'claro-brasil': {
+      name: 'Claro Brasil', initials: 'CB', categoryKey: 'operacional', state: 'active', description: 'Visão integrada de operação, receita e desempenho comercial.', tags: ['Claro', 'Intraday'], updatedAt: '24/08/2026', createdAt: '02/02/2024',
+      owners: [{ role: 'Product Owner', name: 'Ana Ferreira', area: 'Planejamento Analytics' }, { role: 'Tech Owner', name: 'Rafael Lima', area: 'Engenharia de Dados' }, { role: 'Data Owner', name: 'Camila Nunes', area: 'Governança de Dados' }],
+      rules: [{ id: 'ru1', name: 'Planejamento Claro', crMode: 'list', crList: ['31001', '31002', '31003', '31004', '31005'], funcMode: 'list', funcList: ['Supervisor', 'Coordenador'], status: 'Ativa', updatedAt: '26/08/2026' }],
+      exceptions: [{ id: 'ex3', userName: 'Fernanda Souza', matricula: '40205', start: '01/09/2026', end: '31/12/2026', status: 'Agendada' }],
+      contentType: 'nexo', publishStatus: 'published',
+      nexo: { currentVersion: 'v1.4.0', currentPackage: 'claro-brasil-1.4.0.zip', entrypoint: '/index.html', routesCount: 2, lastPublishAt: '26/08/2026 09:20', lastPublishBy: 'Ana Ferreira' },
+      history: [
+        { ref: 'v1.4.0', event: 'Publicado', date: '26/08/2026 09:20', tone: 'positive' },
+        { ref: 'v1.3.2', event: 'Restaurado', date: '20/08/2026 10:15', tone: 'neutral' },
+        { ref: 'v1.3.1', event: 'Publicado', date: '10/08/2026 08:00', tone: 'positive' },
+      ],
+    },
+    'painel-de-clientes': {
+      name: 'Painel de Clientes', initials: 'PC', categoryKey: 'clientes', state: 'active', description: 'Satisfação, churn e jornada dos principais contratos.', tags: ['Churn', 'NPS'], updatedAt: '24/08/2026', createdAt: '14/05/2024',
+      owners: [{ role: 'Product Owner', name: 'Ana Ferreira', area: 'Planejamento Analytics' }, { role: 'Tech Owner', name: 'Rafael Lima', area: 'Engenharia de Dados' }, { role: 'Data Owner', name: 'Camila Nunes', area: 'Governança de Dados' }],
+      rules: [
+        { id: 'ru2', name: 'Painel Executivo', crMode: 'any', crList: [], funcMode: 'list', funcList: ['Gerente'], status: 'Ativa', updatedAt: '20/08/2026' },
+        { id: 'ru5', name: 'Coordenação Nacional', crMode: 'any', crList: [], funcMode: 'list', funcList: ['Coordenador'], status: 'Inativa', updatedAt: '02/07/2026' },
+      ],
+      exceptions: [],
+      contentType: 'powerbi', publishStatus: 'published',
+      powerbi: { report: 'Painel de Clientes', workspace: 'Planejamento Analytics', homePage: 'Visão Geral', integrationStatus: 'Configurada', lastValidationAt: '24/08/2026 14:10', lastPublishAt: '24/08/2026 14:10', lastPublishBy: 'Rafael Lima' },
+      history: [
+        { event: 'Publicado no Nexo', date: '24/08/2026', tone: 'positive' },
+        { event: 'Página inicial alterada para Visão Geral', date: '20/08/2026', tone: 'info' },
+        { event: 'Configuração atualizada', date: '10/08/2026', tone: 'info' },
+      ],
+    },
+    'banco-de-horas': {
+      name: 'Banco de Horas', initials: 'BH', categoryKey: 'gestão', state: 'maintenance', description: 'Acompanhamento de saldo, utilizações e previsões da equipe.', tags: ['RH', 'Equipe'], updatedAt: '20/08/2026', createdAt: '11/09/2023',
+      owners: [{ role: 'Product Owner', name: 'Bruno Costa', area: 'Gestão de Pessoas' }, { role: 'Tech Owner', name: 'Rafael Lima', area: 'Engenharia de Dados' }],
+      rules: [{ id: 'ru3', name: 'Banco de Horas Geral', crMode: 'any', crList: [], funcMode: 'any', funcList: [], status: 'Ativa', updatedAt: '15/08/2026' }],
+      exceptions: [
+        { id: 'ex1', userName: 'Camila Nunes', matricula: '40102', start: '01/08/2026', end: '30/09/2026', status: 'Ativa' },
+        { id: 'ex2', userName: 'Marcelo Alves', matricula: '38820', start: '01/03/2026', end: '30/06/2026', status: 'Expirada' },
+      ],
+      contentType: 'nexo', publishStatus: 'publishing', hadPriorActive: true,
+      nexo: { currentVersion: 'v1.0.3', currentPackage: 'banco-horas-1.0.3.zip', entrypoint: '/index.html', routesCount: 1, lastPublishAt: '25/08/2026 17:40', lastPublishBy: 'Bruno Costa' },
+      history: [
+        { ref: 'v1.0.3', event: 'Publicando', date: '25/08/2026 17:40', tone: 'info' },
+        { ref: 'v1.0.2', event: 'Publicado', date: '15/08/2026 09:00', tone: 'positive' },
+      ],
+    },
+  };
+
+  // Draft fallback: never published — Publicações/Saúde show empty states, header shows "Publicar".
+  fallback = { name: 'Produto Nexo', initials: 'NX', categoryKey: 'operacional', state: 'draft', description: 'Produto administrativo do catálogo Nexo.', tags: ['Claro'], updatedAt: '24/08/2026', createdAt: '24/08/2026', owners: [{ role: 'Product Owner', name: 'Ana Ferreira', area: 'Planejamento Analytics' }], rules: [], exceptions: [], contentType: 'nexo', publishStatus: 'none', hadPriorActive: false, history: [] };
+
+  // Public catalog visibility follows lifecycle, not a static button.
+  publicInfo(p) {
+    if (p.state === 'active' || p.state === 'maintenance' || p.state === 'deprecated') return { show: true, label: 'Ver no catálogo' };
+    if (p.state === 'homologation' && p.hadPriorActive) return { show: true, label: 'Ver no catálogo (versão anterior)' };
+    if (p.state === 'archived') return { show: true, label: 'Ver histórico' };
+    return { show: false, label: '' };
+  }
+
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  productId() { return this.query('id') || 'claro-brasil'; }
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  catLabel(key) { return (this.categoriesData.find((c) => c.key === key) || {}).label || key; }
+
+  componentDidMount() {
+    const t = this.query('tab');
+    const valid = ['geral', 'responsaveis', 'acesso', 'conteudo', 'publicacoes', 'saude'];
+    if (t && valid.includes(t)) this.setState({ tab: t });
+  }
+
+  syncUrl(tab) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', tab);
+      window.history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+    } catch (e) {}
+  }
+
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  goEdit = () => { window.location.href = '../admin-produtos-novo/AdminProdutoNovo.dc.html?mode=edit&id=' + encodeURIComponent(this.productId()); };
+  goCatalog = () => { window.location.href = '../detalhe-produto/DetalheProduto.dc.html?produto=' + encodeURIComponent(this.record().name); };
+  goPublish = () => { window.location.href = '../admin-publicacoes-nova/AdminPublicacaoNova.dc.html?productId=' + encodeURIComponent(this.productId()); };
+  goAllPublications = () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html?produto=' + encodeURIComponent(this.productId()); };
+  goAllRules = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=regras&produto=' + encodeURIComponent(this.record().name); };
+  goNewRule = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=regras&novaRegra=1&produto=' + encodeURIComponent(this.record().name); };
+  goEditRule = (ruleId) => { window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=regras&produto=' + encodeURIComponent(this.record().name) + '&ruleId=' + encodeURIComponent(ruleId); };
+  goAllExceptions = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=excecoes&produto=' + encodeURIComponent(this.record().name); };
+  goNewException = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html?tab=excecoes&novaExcecao=1&produto=' + encodeURIComponent(this.record().name); };
+  toggleRuleStatus = (ruleId, currentStatus) => this.setState((s) => ({ ruleOverrides: { ...s.ruleOverrides, [ruleId]: currentStatus === 'Ativa' ? 'Inativa' : 'Ativa' } }));
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  noop = () => {};
+  setTab = (id) => { this.setState({ tab: id }); this.syncUrl(id); };
+
+  record() { return this.catalog[this.productId()] || this.fallback; }
+
+  renderVals() {
+    const ns = this.ns();
+    const id = this.productId();
+    const p = this.record();
+    const st = this.statesData[p.state];
+    const catLabel = this.catLabel(p.categoryKey);
+    const tab = this.state.tab;
+    const isPowerBI = p.contentType === 'powerbi';
+    const hasPublication = p.publishStatus !== 'none';
+    const pub = this.publicInfo(p);
+
+    const resources = [
+      { title: 'Documentação do produto', description: 'Guia institucional, definições e regras de cálculo das métricas.', external: false },
+      { title: 'Dicionário de métricas', description: 'Indicadores com fórmula, granularidade e dono da regra.', external: false },
+      { title: 'Repositório de dados', description: 'Pipeline e fontes de dados consumidos pelo produto.', external: true },
+    ];
+
+    const generalInfo = [
+      { label: 'Identificador do produto', value: id, valueType: 'copy' },
+      { label: 'Categoria', value: catLabel },
+      { label: 'Tipo de conteúdo', value: this.contentTypeLabels[p.contentType] },
+      { label: 'Estado', value: React.createElement(ns.StatusBadge, { label: st.label, tone: st.tone }) },
+      { label: 'Descrição', value: p.description },
+      { label: 'Criado em', value: p.createdAt },
+      { label: 'Atualizado em', value: p.updatedAt },
+      { label: 'Fonte de dados', value: 'DW Corporativo · Nexo', valueType: 'link' },
+    ];
+
+    const crSummary = (r) => r.crMode === 'any' ? 'Qualquer CR' : ((r.crList.slice(0, 3).join(', ') + (r.crList.length > 3 ? ' +' + (r.crList.length - 3) : '')) || '—');
+    const funcSummary = (r) => r.funcMode === 'any' ? 'Qualquer função' : (r.funcList.join(', ') || '—');
+    const excStatusTone = { 'Ativa': 'positive', 'Agendada': 'info', 'Expirada': 'neutral', 'Revogada': 'negative' };
+
+    const rulesForProduct = (p.rules || []).map((r) => ({ ...r, status: this.state.ruleOverrides[r.id] || r.status }));
+    const exceptionsForProduct = p.exceptions || [];
+
+    const ruleColumns = [
+      { key: 'name', header: 'Nome da regra', minWidth: 180 },
+      { key: 'cr', header: 'CR', render: crSummary, minWidth: 170 },
+      { key: 'func', header: 'FUNCAORM', render: funcSummary, minWidth: 150 },
+      { key: 'status', header: 'Status', render: (r) => React.createElement(ns.StatusBadge, { label: r.status, tone: r.status === 'Ativa' ? 'positive' : 'neutral' }), minWidth: 100 },
+      { key: 'updatedAt', header: 'Última atualização', mono: true, minWidth: 130 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (r) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Editar regra', onClick: () => this.goEditRule(r.id) },
+        { label: r.status === 'Ativa' ? 'Desativar' : 'Ativar', tone: r.status === 'Ativa' ? 'negative' : 'default', onClick: () => this.toggleRuleStatus(r.id, r.status) },
+      ] }) },
+    ];
+
+    const exceptionColumns = [
+      { key: 'userName', header: 'Usuário', minWidth: 170 },
+      { key: 'matricula', header: 'Matrícula', mono: true, minWidth: 110 },
+      { key: 'period', header: 'Período', mono: true, minWidth: 160, render: (e) => e.start + ' — ' + e.end },
+      { key: 'status', header: 'Status', minWidth: 110, render: (e) => React.createElement(ns.StatusBadge, { label: e.status, tone: excStatusTone[e.status] || 'neutral' }) },
+    ];
+
+    const rulesEmptyState = React.createElement(ns.DataDataState, { type: 'noresults', text1: 'Nenhuma regra de acesso', text2: 'Crie uma regra de CR + FUNCAORM para autorizar este produto.' });
+    const exceptionsEmptyState = React.createElement(ns.DataDataState, { type: 'noresults', text1: 'Nenhuma exceção', text2: 'Não há exceções individuais para este produto.' });
+
+    // Conteúdo tab: composition depends entirely on Tipo de conteúdo (spec §5–8).
+    let contentInfo = [];
+    let contentPrimaryActionLabel = '', contentSecondaryActionLabel = '', contentPrimaryAction = this.noop, contentSecondaryAction = this.noop;
+    if (isPowerBI) {
+      const pb = p.powerbi || {};
+      contentInfo = hasPublication ? [
+        { label: 'Tipo', value: 'Power BI' },
+        { label: 'Relatório', value: pb.report },
+        { label: 'Workspace', value: pb.workspace },
+        { label: 'Página inicial', value: pb.homePage },
+        { label: 'Status da integração', value: React.createElement(ns.StatusBadge, { label: pb.integrationStatus, tone: pb.integrationStatus === 'Configurada' ? 'positive' : 'warning' }) },
+        { label: 'Última validação', value: pb.lastValidationAt },
+      ] : [
+        { label: 'Tipo', value: 'Power BI' },
+        { label: 'Status', value: 'Ainda não publicado' },
+      ];
+      contentSecondaryActionLabel = 'Validar integração'; contentSecondaryAction = this.goPublish;
+      contentPrimaryActionLabel = 'Editar configuração'; contentPrimaryAction = this.goPublish;
+    } else {
+      const nx = p.nexo || {};
+      contentInfo = hasPublication ? [
+        { label: 'Tipo', value: 'Projeto Nexo' },
+        { label: 'Versão atual', value: nx.currentVersion },
+        { label: 'Pacote atual', value: nx.currentPackage, valueType: 'copy' },
+        { label: 'Entrypoint', value: nx.entrypoint },
+        { label: 'Rotas', value: String(nx.routesCount) },
+        { label: 'Última publicação', value: nx.lastPublishAt },
+      ] : [
+        { label: 'Tipo', value: 'Projeto Nexo' },
+        { label: 'Status', value: 'Ainda não publicado' },
+      ];
+      contentSecondaryActionLabel = 'Ver configuração'; contentSecondaryAction = this.goPublish;
+      contentPrimaryActionLabel = hasPublication ? 'Publicar atualização' : 'Publicar'; contentPrimaryAction = this.goPublish;
+    }
+
+    const currentPublicationInfo = isPowerBI ? [
+      { label: 'Status', value: React.createElement(ns.StatusBadge, { label: 'Publicado', tone: 'positive' }) },
+      { label: 'Referência', value: (p.powerbi || {}).report },
+      { label: 'Publicado por', value: (p.powerbi || {}).lastPublishBy },
+      { label: 'Publicado em', value: (p.powerbi || {}).lastPublishAt },
+    ] : [
+      { label: 'Status', value: React.createElement(ns.StatusBadge, { label: p.publishStatus === 'publishing' ? 'Publicando' : 'Publicado', tone: p.publishStatus === 'publishing' ? 'info' : 'positive' }) },
+      { label: 'Referência', value: (p.nexo || {}).currentVersion },
+      { label: 'Publicado por', value: (p.nexo || {}).lastPublishBy },
+      { label: 'Publicado em', value: (p.nexo || {}).lastPublishAt },
+    ];
+
+    const historyColumns = [
+      ...(isPowerBI ? [] : [{ key: 'ref', header: 'Versão', mono: true }]),
+      { key: 'event', header: 'Evento' },
+      { key: 'date', header: 'Data', mono: true },
+      { key: 'status', header: 'Status', render: (row) => React.createElement(ns.StatusBadge, { label: row.event, tone: row.tone }) },
+    ];
+
+    const healthColumns = [
+      { key: 'indicator', header: 'Indicador' },
+      { key: 'value', header: 'Valor', numeric: true },
+      { key: 'lastRun', header: 'Última execução', mono: true },
+      { key: 'status', header: 'Status', render: (row) => React.createElement(ns.StatusBadge, { label: row.statusLabel, tone: row.statusTone }) },
+    ];
+    const healthRows = !hasPublication ? [] : (isPowerBI ? [
+      { indicator: 'Disponibilidade da integração (30d)', value: '99,6%', lastRun: (p.powerbi || {}).lastValidationAt, statusLabel: 'Saudável', statusTone: 'positive' },
+      { indicator: 'Tempo de carregamento', value: '2,1 s', lastRun: (p.powerbi || {}).lastValidationAt, statusLabel: 'Saudável', statusTone: 'positive' },
+      { indicator: 'Falhas de embed (7d)', value: '0', lastRun: (p.powerbi || {}).lastValidationAt, statusLabel: 'Saudável', statusTone: 'positive' },
+    ] : [
+      { indicator: 'Disponibilidade (30d)', value: '99,8%', lastRun: (p.nexo || {}).lastPublishAt, statusLabel: 'Saudável', statusTone: 'positive' },
+      { indicator: 'Tempo médio de carga', value: '4,2 min', lastRun: (p.nexo || {}).lastPublishAt, statusLabel: 'Saudável', statusTone: 'positive' },
+      { indicator: 'Erros do produto (7d)', value: '2', lastRun: (p.nexo || {}).lastPublishAt, statusLabel: 'Atenção', statusTone: 'warning' },
+    ]);
+
+    // Header CTAs: at most 2, prioritized by lifecycle (spec §16) — publish action wins over
+    // "Ver no catálogo", which is preserved as a lightweight link near the breadcrumb instead.
+    const primaryLabel = !hasPublication ? 'Publicar' : 'Editar produto';
+    const primaryAction = !hasPublication ? this.goPublish : this.goEdit;
+    const showSecondaryAction = hasPublication;
+    const secondaryLabel = 'Publicar atualização';
+    const secondaryAction = this.goPublish;
+
+    return {
+      productName: p.name, productDescription: p.description, productInitials: p.initials,
+      lifecycleTone: st.tone, statusLabel: st.label,
+      categoryKey: p.categoryKey, categoryLabel: catLabel, tags: p.tags,
+      metadata: 'Atualizado em ' + p.updatedAt,
+      goCatalog: this.goCatalog, showPublicLink: pub.show, publicActionLabel: pub.label,
+      primaryLabel, primaryAction, showSecondaryAction, secondaryLabel, secondaryAction,
+      tabs: [
+        { id: 'geral', label: 'Geral' },
+        { id: 'responsaveis', label: 'Responsáveis' },
+        { id: 'acesso', label: 'Acesso' },
+        { id: 'conteudo', label: 'Conteúdo' },
+        { id: 'publicacoes', label: 'Publicações' },
+        { id: 'saude', label: 'Saúde' },
+      ],
+      activeTab: tab, setTab: this.setTab,
+      isGeral: tab === 'geral', isResponsaveis: tab === 'responsaveis', isAcesso: tab === 'acesso',
+      isConteudo: tab === 'conteudo', isPublicacoes: tab === 'publicacoes', isSaude: tab === 'saude',
+      generalInfo, resources,
+      owners: (p.owners || []).map((o) => ({ ...o, onContact: () => { window.location.href = 'mailto:' + o.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, '.').replace(/^\.|\.$/g, '') + '@aec.com.br'; } })),
+      rulesForProduct, exceptionColumns, exceptionsForProduct, ruleColumns, rulesEmptyState, exceptionsEmptyState,
+      goAllRules: this.goAllRules, goNewRule: this.goNewRule, goAllExceptions: this.goAllExceptions, goNewException: this.goNewException,
+      contentTypeLabel: this.contentTypeLabels[p.contentType], contentInfo,
+      contentPrimaryActionLabel, contentPrimaryAction, contentSecondaryActionLabel, contentSecondaryAction,
+      hasNoPublication: !hasPublication, hasPublication,
+      currentPublicationInfo, historyColumns, historyRows: p.history || [],
+      goPublish: this.goPublish, goAllPublications: this.goAllPublications,
+      healthColumns, healthRows,
+      crumbs: [
+        { label: 'Produtos', onClick: this.goList },
+        { label: p.name, current: true },
+      ],
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      noop: this.noop,
+      sidebarCollapsed: this.state.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: this.state.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        this.state.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), active: true, onClick: this.goList },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

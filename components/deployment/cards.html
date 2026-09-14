@@ -1,0 +1,81 @@
+<!-- @dsCard group="Components" viewport="1040x1780" name="Deployment & Runtime" subtitle="Pipeline timeline, validation checklist, approvals, environment state, log console, report embed" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:20px;display:flex;flex-direction:column;gap:24px;background:var(--color-surface-page)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { DeploymentTimelineItem, DeploymentApprovalItem, DeploymentEnvironmentStateCard, DeploymentLogRow, DeploymentValidationItem, RuntimeReportEmbedFrame } = window.DesignSystem_25dd5c;
+
+function Label({children}){
+  return <span style={{fontFamily:'Inter, sans-serif',fontSize:11,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase',color:'var(--color-text-secondary)'}}>{children}</span>;
+}
+function Section({title,children}){
+  return <div style={{display:'flex',flexDirection:'column',gap:10,paddingTop:14,borderTop:'1px solid var(--color-border-default)'}}>
+    <Label>{title}</Label>
+    {children}
+  </div>;
+}
+function Scaled({w,h,scale,children}){
+  return <div style={{width:w*scale,height:h*scale,overflow:'hidden',flexShrink:0}}>
+    <div style={{width:w,height:h,transform:`scale(${scale})`,transformOrigin:'top left'}}>{children}</div>
+  </div>;
+}
+
+function App(){
+  const [log, setLog] = React.useState('—');
+  return <>
+    <Section title="Pipeline — Deployment/Timeline Item">
+      <ol style={{display:'flex',flexDirection:'column',width:'100%',maxWidth:560,margin:0,padding:0,listStyle:'none'}}>
+        <DeploymentTimelineItem title="Build" state="completed" connector timestamp="09:12" description="Pacote gerado e assinado."/>
+        <DeploymentTimelineItem title="Homologação" state="current" connector timestamp="09:20" description="Conectando aos servidores de homologação." onProgressClick={()=>setLog('Timeline: Ver detalhes')}/>
+        <DeploymentTimelineItem title="Publicação" state="upcoming" timestamp="—" descriptionVisible={false} progressCTA={false}/>
+      </ol>
+    </Section>
+
+    <Section title="Validações — Deployment/Validation Item">
+      <ul role="list" style={{display:'flex',flexDirection:'column',gap:8,margin:0,padding:0,listStyle:'none'}}>
+        <DeploymentValidationItem name="Estrutura do pacote válida" state="success" description="Arquivos obrigatórios encontrados."/>
+        <DeploymentValidationItem name="Variáveis de ambiente" state="warning" description="2 chaves opcionais ausentes."/>
+        <DeploymentValidationItem name="Migração de banco de dados" state="error" description="Falha ao aplicar script 0042."/>
+      </ul>
+    </Section>
+
+    <Section title="Aprovações — Deployment/Approval Item">
+      <ul role="list" style={{display:'flex',flexDirection:'column',gap:8,margin:0,padding:0,listStyle:'none'}}>
+        <DeploymentApprovalItem name="Carlos Almeida" state="approved" roleContext="Homologador" comment="Validado sem ressalvas."/>
+        <DeploymentApprovalItem name="Bianca Souza" state="pending" roleContext="Aprovador de produção" commentVisible={false}/>
+      </ul>
+    </Section>
+
+    <Section title="Ambientes — Deployment/Environment State Card">
+      <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+        <DeploymentEnvironmentStateCard environment="DEV" state="deployed" version="v1.3.2"/>
+        <DeploymentEnvironmentStateCard environment="HML" state="deploying" version="v1.3.0"/>
+        <DeploymentEnvironmentStateCard environment="PRD" state="failed" version="v1.2.8" onViewDetails={()=>setLog('Ambiente: Ver detalhes (PRD)')}/>
+        <DeploymentEnvironmentStateCard environment="STG" state="not-deployed" version="—" authorCTA={false}/>
+      </div>
+    </Section>
+
+    <Section title="Logs — Deployment/Log Row">
+      <div role="table" aria-label="Log de deploy" style={{display:'flex',flexDirection:'column',gap:6}}>
+        <DeploymentLogRow state="info" origin="deploy" message="Pacote extraído com sucesso."/>
+        <DeploymentLogRow state="success" origin="build" message="Build concluído em 42s."/>
+        <DeploymentLogRow state="warning" origin="migrate" message="Índice não encontrado; recriando."/>
+        <DeploymentLogRow state="error" origin="deploy" message="Timeout ao conectar ao servidor HML."/>
+      </div>
+    </Section>
+
+    <Section title="Runtime — Report Embed Frame">
+      <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+        <Scaled w={1360} h={760} scale={0.35}><RuntimeReportEmbedFrame state="loaded"/></Scaled>
+        <Scaled w={1360} h={760} scale={0.35}><RuntimeReportEmbedFrame state="error"/></Scaled>
+        <Scaled w={1360} h={760} scale={0.35}><RuntimeReportEmbedFrame state="restricted"/></Scaled>
+      </div>
+    </Section>
+    <span style={{fontSize:12,color:'var(--color-text-secondary)',fontFamily:'var(--font-mono)'}}>último evento: {log}</span>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

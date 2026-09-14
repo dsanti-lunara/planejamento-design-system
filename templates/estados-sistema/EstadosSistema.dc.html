@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Estados do Sistema" description="Documentação viva dos estados de erro e indisponibilidade do Nexo — 403, 404, erro, restrito, manutenção, arquivado, descontinuado e a tradução de erros de Power BI." -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0;padding:0;height:100%}#root{height:100%}*{box-sizing:border-box}</style></helmet>
+<div style="display:flex;height:100dvh;min-height:0;font-family:var(--font-sans);background:var(--color-surface-page)">
+<nav style="width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:24px;padding:24px 16px;overflow-y:auto;background:var(--color-surface-card);border-right:1px solid var(--color-border-default)">
+<div style="display:flex;flex-direction:column;gap:4px;padding:0 8px">
+<span style="font-size:15px;font-weight:700;color:var(--color-text-primary)">Estados do Sistema</span>
+<span style="font-size:12px;color:var(--color-text-secondary);line-height:150%">Linguagem única de erro e indisponibilidade — reusada no Portal e no Runtime.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-tertiary,var(--color-text-secondary));padding:6px 8px">Página inteira</span>
+<sc-for list="{{ fullpageNav }}" as="item" hint-placeholder-count="8">
+<sc-if value="{{ item.active }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ item.select }}" style="text-align:left;border:0;border-radius:8px;padding:9px 8px;cursor:pointer;font-size:13px;background:var(--color-state-info-subtle);color:var(--color-text-brand);font-weight:700">{{ item.label }}</button>
+</sc-if>
+<sc-if value="{{ item.inactive }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ item.select }}" style="text-align:left;border:0;border-radius:8px;padding:9px 8px;cursor:pointer;font-size:13px;background:transparent;color:var(--color-text-secondary);font-weight:500">{{ item.label }}</button>
+</sc-if>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-tertiary,var(--color-text-secondary));padding:6px 8px">Contextual</span>
+<sc-for list="{{ contextNav }}" as="item" hint-placeholder-count="2">
+<sc-if value="{{ item.active }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ item.select }}" style="text-align:left;border:0;border-radius:8px;padding:9px 8px;cursor:pointer;font-size:13px;background:var(--color-state-info-subtle);color:var(--color-text-brand);font-weight:700">{{ item.label }}</button>
+</sc-if>
+<sc-if value="{{ item.inactive }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ item.select }}" style="text-align:left;border:0;border-radius:8px;padding:9px 8px;cursor:pointer;font-size:13px;background:transparent;color:var(--color-text-secondary);font-weight:500">{{ item.label }}</button>
+</sc-if>
+</sc-for>
+</div>
+</nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto">
+<div style="padding:24px 40px;border-bottom:1px solid var(--color-border-default);display:flex;flex-direction:column;gap:6px;background:var(--color-surface-card)">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:20px;font-weight:700;color:var(--color-text-primary)">{{ curNavLabel }}</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.StatusBadge" label="{{ curCodeBadge }}" tone="neutral" hint-size="auto,22px"></x-import>
+</div>
+<span style="font-size:13px;color:var(--color-text-secondary);max-width:760px;line-height:150%">{{ curRule }}</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:40px 24px;gap:16px">
+<sc-if value="{{ isFullpage }}" hint-placeholder-val="{{ true }}">
+<div style="width:100%;max-width:1040px;display:flex;flex-direction:column;align-items:center;gap:12px">
+<button type="button" onClick="{{ toggleTech }}" style="align-self:center;background:transparent;border:0;padding:0;cursor:pointer;font-size:12px;font-weight:500;color:var(--color-text-link)">{{ techToggleLabel }}</button>
+<div style="width:100%;border-radius:12px;border:1px solid var(--color-border-default);background:var(--color-surface-card);box-shadow:var(--shadow-md,0 1px 2px rgba(16,24,40,.06));overflow:hidden;display:flex;justifyContent:center">
+<x-import component-from-global-scope="DesignSystem_25dd5c.StateFullPage" type="{{ curType }}" eyebrow="{{ curEyebrow }}" eyebrowVisible="{{ true }}" title="{{ curTitle }}" description="{{ curDescription }}" code="{{ curCode }}" codeVisible="{{ curCodeVisible }}" supportingInfo="{{ curSupporting }}" supportingInfoVisible="{{ curSupportingVisible }}" technicalInfo="{{ curTechnical }}" technicalInfoVisible="{{ techOpen }}" primaryAction="{{ true }}" primaryActionLabel="{{ curPrimaryLabel }}" secondaryAction="{{ curHasSecondary }}" secondaryActionLabel="{{ curSecondaryLabel }}" onPrimaryAction="{{ onPrimary }}" onSecondaryAction="{{ onSecondary }}" style="width:960px;max-width:100%;height:700px" hint-size="960px,700px"></x-import>
+</div>
+<span style="font-size:12px;color:var(--color-text-tertiary,var(--color-text-secondary));font-family:var(--font-mono)">último evento: {{ lastAction }}</span>
+</div>
+</sc-if>
+<sc-if value="{{ isDeprecatedBanner }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;max-width:1040px;display:flex;flex-direction:column;gap:16px">
+<span style="font-size:13px;color:var(--color-text-secondary);line-height:150%">Enquanto a execução ainda é permitida, o aviso aparece como um banner discreto no topo do produto — nunca como StateFullPage. Quando a execução for encerrada, use o estado "Descontinuado" acima.</span>
+<div style="border-radius:12px;overflow:hidden;border:1px solid var(--color-border-default);display:flex;flex-direction:column">
+<div style="height:46px;flex-shrink:0;background:var(--color-surface-card);border-bottom:1px solid var(--color-border-default);display:flex;align-items:center;padding:0 16px;font-size:12px;font-weight:600;color:var(--color-text-secondary)">Nexo · Painel de Clientes</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.FeedbackSystemBanner" message="Este produto será descontinuado em 30/09/2026. Migre para o produto substituto antes dessa data." tone="deprecated" cTA="Ver produto substituto" dismiss="{{ true }}" onCtaClick="{{ onPrimary }}" style="border-radius:0;flex-shrink:0" hint-size="100%,56px"></x-import>
+<div style="height:280px;background:var(--color-surface-subtle);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--color-text-tertiary,var(--color-text-secondary))">área do produto (execução normal)</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ isPowerbi }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;max-width:1040px;display:flex;flex-direction:column;gap:16px">
+<span style="font-size:13px;color:var(--color-text-secondary);line-height:150%">Falhas técnicas de embed (Power BI ou Projeto Nexo) nunca chegam ao usuário como vieram do SDK — são traduzidas para a mesma linguagem de estados do Nexo, com o detalhe técnico disponível sob demanda.</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div style="border-radius:12px;border:1px dashed var(--color-border-default);padding:20px;display:flex;flex-direction:column;gap:8px;background:var(--color-surface-card)">
+<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-negative)">Nunca mostrar diretamente</span>
+<code style="font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);line-height:160%;white-space:pre-wrap">PowerBIEmbedError: 403 Forbidden
+embed-token invalid or expired
+workspace=Planejamento Analytics
+report=Painel de Clientes</code>
+</div>
+<div style="border-radius:12px;border:1px solid var(--color-border-default);padding:20px;display:flex;flex-direction:column;gap:8px;background:var(--color-surface-card)">
+<span style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-positive)">Traduzido para o usuário</span>
+<span style="font-size:15px;font-weight:700;color:var(--color-text-primary)">Não foi possível carregar o relatório.</span>
+<button type="button" onClick="{{ toggleTech }}" style="align-self:flex-start;background:transparent;border:0;padding:0;cursor:pointer;font-size:12px;font-weight:500;color:var(--color-text-link)">{{ techToggleLabel }}</button>
+<sc-if value="{{ techOpen }}" hint-placeholder-val="{{ false }}">
+<code style="font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);line-height:160%">PROD-502 · stage=powerbi-embed-render · sdk=powerbi-client@2.23 · trace=prod-9ac412</code>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;initialState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;forbidden&quot;,&quot;notfound&quot;,&quot;errorNexo&quot;,&quot;errorProduto&quot;,&quot;restricted&quot;,&quot;maintenance&quot;,&quot;archived&quot;,&quot;deprecatedEnded&quot;,&quot;deprecatedBanner&quot;,&quot;powerbiTranslation&quot;],&quot;default&quot;:&quot;forbidden&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Estado inicial&quot;}}">
+const FULLPAGE_STATES = {
+  forbidden: { navLabel: '403 · Acesso não autorizado', rule: 'Permissão ausente, sem contexto de Produto conhecido. Não usar quando o Produto for identificável — nesse caso use "Restrito".', type: 'forbidden', eyebrow: 'Estado do sistema', title: 'Acesso não autorizado', description: 'Você não possui permissão para acessar este conteúdo.', code: '403', codeVisible: true, primaryLabel: 'Voltar ao Nexo', secondaryLabel: 'Consultar outro produto', hasSecondary: true, technical: 'NEXO-403 · policy=auth:denied' },
+  notfound: { navLabel: '404 · Página não encontrada', rule: 'Rota inexistente. Apenas uma ação — sem opção secundária.', type: 'not found', eyebrow: 'Estado do sistema', title: 'Página não encontrada', description: 'Não encontramos a página que você tentou acessar.', code: '404', codeVisible: true, primaryLabel: 'Voltar ao Nexo', hasSecondary: false, technical: 'NEXO-404 · route=unresolved' },
+  errorNexo: { navLabel: 'Erro do Nexo', rule: 'Falha na camada do portal — a requisição não chegou a acionar o produto.', type: 'error', eyebrow: 'Falha do Nexo', title: 'Não foi possível carregar o Nexo', description: 'Algo deu errado ao montar esta página. Você pode tentar novamente ou voltar ao início.', code: 'NEXO-500', codeVisible: false, primaryLabel: 'Tentar novamente', secondaryLabel: 'Voltar ao Nexo', hasSecondary: true, technical: 'NEXO-500 · stage=host-bootstrap · trace=nexo-7f31c9' },
+  errorProduto: { navLabel: 'Erro do Produto', rule: 'O Nexo carregou normalmente; a falha ocorreu dentro do produto (Power BI ou Projeto Nexo) — mesma linguagem, código PROD-.', type: 'error', eyebrow: 'Falha do produto', title: 'O produto retornou um erro durante a execução', description: 'O Nexo carregou o runtime normalmente; a falha ocorreu na integração do produto.', code: 'PROD-502', codeVisible: false, primaryLabel: 'Tentar novamente', secondaryLabel: 'Voltar ao Nexo', hasSecondary: true, technical: 'PROD-502 · stage=report-render · trace=prod-9ac412' },
+  restricted: { navLabel: 'Restrito', rule: 'Produto conhecido, mas o usuário não tem acesso — nunca tratar como 403 genérico. Não expor regras completas de autorização.', type: 'restricted', eyebrow: 'Acesso restrito', title: 'Acesso restrito', description: 'Seu CR e FUNCAORM atuais não possuem acesso a este produto.', code: 'NEXO-403', codeVisible: false, primaryLabel: 'Voltar ao catálogo', secondaryLabel: 'Consultar acesso', hasSecondary: true, technical: 'NEXO-403 · policy=data-scope:restricted' },
+  maintenance: { navLabel: 'Manutenção', rule: 'Indisponibilidade temporária e planejada. Mostrar previsão de retorno quando existir. Nunca renderizar como 403.', type: 'maintenance', eyebrow: 'Estado do sistema', title: 'Produto em manutenção', description: 'Este produto está temporariamente indisponível enquanto uma manutenção é realizada.', code: undefined, codeVisible: false, supporting: 'Previsão de retorno: 18/05 às 04:00.', primaryLabel: 'Voltar ao Nexo', secondaryLabel: 'Tentar novamente', hasSecondary: true, technical: 'NEXO-503 · window=2026-05-18T04:00Z' },
+  archived: { navLabel: 'Arquivado', rule: 'O produto existe, mas foi arquivado — nunca tratar como 404. Uma única ação.', type: 'archived', eyebrow: 'Produto arquivado', title: 'Produto arquivado', description: 'Este produto não está mais disponível para execução.', code: undefined, codeVisible: false, primaryLabel: 'Voltar ao catálogo', hasSecondary: false, technical: 'NEXO-410 · lifecycle=archived' },
+  deprecatedEnded: { navLabel: 'Descontinuado (encerrado)', rule: 'Prazo da depreciação venceu e o runtime foi desligado — indica o produto substituto quando existir.', type: 'forbidden', eyebrow: 'Produto descontinuado', title: 'A execução deste produto foi encerrada', description: 'O prazo da regra de depreciação venceu. Use o produto substituto indicado no catálogo.', code: 'NEXO-409', codeVisible: false, primaryLabel: 'Ver produto substituto', secondaryLabel: 'Voltar ao catálogo', hasSecondary: true, technical: 'lifecycle=deprecated · grace-period=expired' },
+};
+const FULLPAGE_ORDER = ['forbidden', 'notfound', 'errorNexo', 'errorProduto', 'restricted', 'maintenance', 'archived', 'deprecatedEnded'];
+const CONTEXT_STATES = {
+  deprecatedBanner: { navLabel: 'Aviso de descontinuação', rule: 'Enquanto a execução ainda é permitida, o alerta é um banner contextual discreto — não uma página de estado inteira.' },
+  powerbiTranslation: { navLabel: 'Tradução de erros (Power BI)', rule: 'Erros técnicos de embed são sempre traduzidos para a linguagem do Nexo antes de chegar ao usuário.' },
+};
+const CONTEXT_ORDER = ['deprecatedBanner', 'powerbiTranslation'];
+
+class Component extends DCLogic {
+  state = { current: this.props.initialState || 'forbidden', techOpen: false, lastAction: '—' };
+  select(key) { this.setState({ current: key, techOpen: false }); }
+  toggleTech() { this.setState((s) => ({ techOpen: !s.techOpen })); }
+  primaryClick() { this.setState({ lastAction: FULLPAGE_STATES[this.state.current] ? FULLPAGE_STATES[this.state.current].primaryLabel : 'ação primária' }); }
+  secondaryClick() { this.setState({ lastAction: FULLPAGE_STATES[this.state.current] ? (FULLPAGE_STATES[this.state.current].secondaryLabel || 'ação secundária') : 'ação secundária' }); }
+  renderVals() {
+    const cur = this.state.current;
+    const isFullpage = !!FULLPAGE_STATES[cur];
+    const isDeprecatedBanner = cur === 'deprecatedBanner';
+    const isPowerbi = cur === 'powerbiTranslation';
+    const fp = FULLPAGE_STATES[cur];
+    const meta = fp || CONTEXT_STATES[cur] || {};
+    const navItem = (key, label) => ({
+      label,
+      active: key === cur,
+      inactive: key !== cur,
+      select: () => this.select(key),
+    });
+    return {
+      fullpageNav: FULLPAGE_ORDER.map((k) => navItem(k, FULLPAGE_STATES[k].navLabel)),
+      contextNav: CONTEXT_ORDER.map((k) => navItem(k, CONTEXT_STATES[k].navLabel)),
+      curNavLabel: meta.navLabel || '',
+      curRule: meta.rule || '',
+      curCodeBadge: fp ? (fp.code || fp.technical.split(' ')[0]) : (cur === 'powerbiTranslation' ? 'PROD-502' : 'AVISO'),
+      isFullpage, isDeprecatedBanner, isPowerbi,
+      curType: fp ? fp.type : 'error',
+      curEyebrow: fp ? fp.eyebrow : '',
+      curTitle: fp ? fp.title : '',
+      curDescription: fp ? fp.description : '',
+      curCode: fp ? fp.code : '',
+      curCodeVisible: fp ? !!fp.codeVisible : false,
+      curSupporting: fp ? fp.supporting : '',
+      curSupportingVisible: !!(fp && fp.supporting),
+      curTechnical: fp ? fp.technical : '',
+      curPrimaryLabel: fp ? fp.primaryLabel : '',
+      curSecondaryLabel: fp ? fp.secondaryLabel : '',
+      curHasSecondary: fp ? !!fp.hasSecondary : false,
+      techOpen: this.state.techOpen,
+      techToggleLabel: this.state.techOpen ? 'Ocultar detalhes técnicos' : 'Ver detalhes técnicos',
+      toggleTech: () => this.toggleTech(),
+      lastAction: this.state.lastAction,
+      onPrimary: () => this.primaryClick(),
+      onSecondary: () => this.secondaryClick(),
+    };
+  }
+}
+</script>
+</body>
+</html>

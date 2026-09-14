@@ -1,0 +1,32 @@
+<!-- @dsCard group="Components" viewport="700x760" name="Feedback & States" subtitle="Alert, banner, progress, full-page states, illustrations — all real click/dismiss handlers" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface-page)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { FeedbackAlert, FeedbackSystemBanner, FeedbackLinearProgress, FeedbackNotificationBell, StateFullPage, DataDataState } = window.DesignSystem_25dd5c;
+function Row({children}){ return <div style={{display:'flex',gap:10,alignItems:'flex-start',flexWrap:'wrap'}}>{children}</div>; }
+function App(){
+  const [log, setLog] = React.useState('—');
+  const [pct, setPct] = React.useState(35);
+  return <>
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      <FeedbackAlert tone="info" title="Base histórica fechada D-1" description="Os indicadores refletem o fechamento do dia anterior." showTitle onDismiss={()=>setLog('Alert fechado')}/>
+      <FeedbackAlert tone="warning" title="Metodologia em validação" showTitle/>
+      <FeedbackAlert tone="error" title="Falha ao carregar" showTitle/>
+    </div>
+    <Row><FeedbackSystemBanner tone="info" onCtaClick={()=>setLog('Banner CTA')} onDismiss={()=>setLog('Banner fechado')} style={{width:'100%'}}/></Row>
+    <Row>
+      <FeedbackLinearProgress value={pct+"%"} size="sm"/>
+      <button onClick={()=>setPct(p=>Math.min(100,p+15))} style={{fontFamily:'var(--font-sans)',fontSize:12,padding:'4px 8px',borderRadius:6,border:'1px solid var(--color-border-default)',background:'var(--color-surface-raised)',cursor:'pointer'}}>+15%</button>
+      <FeedbackNotificationBell count="numeric" onClick={()=>setLog('Bell clicado')}/>
+    </Row>
+    <Row><DataDataState type="empty"/><DataDataState type="error"/><DataDataState type="loading"/><DataDataState type="restricted"/></Row>
+    <Row><StateFullPage type="404" style={{width:700,height:420}} onPrimaryAction={()=>setLog('404: ação primária')} onSecondaryAction={()=>setLog('404: ação secundária')}/></Row>
+    <Row><span style={{fontSize:12,color:'var(--color-text-muted)',fontFamily:'var(--font-mono)'}}>último evento: {log}</span></Row>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

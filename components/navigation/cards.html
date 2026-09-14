@@ -1,0 +1,39 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Navigation" subtitle="Sidebar, breadcrumb, tabs, pagination, global search, command palette" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface-page)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { NavigationSidebarItem, NavigationBreadcrumb, TabItem, PaginationItem, NavigationPagination, SearchGlobalSearch, NavigationStepper, NavigationCommandPalette } = window.DesignSystem_25dd5c;
+function Row({children}){ return <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>{children}</div>; }
+function App(){
+  const [cmdOpen, setCmdOpen] = React.useState(false);
+  return <>
+    <div style={{width:220,background:'var(--color-surface-sidebar)',display:'flex',flexDirection:'column',gap:2,padding:8,borderRadius:8}}>
+      <NavigationSidebarItem label="Início" state="active"/>
+      <NavigationSidebarItem label="Demanda" state="default"/>
+      <NavigationSidebarItem label="Capacidade" state="hover"/>
+      <NavigationSidebarItem label="Estrutura" state="default" badge="3" showBadge/>
+    </div>
+    <Row><NavigationBreadcrumb path="short"/></Row>
+    <Row><span style={{fontSize:11,color:'var(--color-text-muted)'}}>Overflow (clique em •••):</span><NavigationBreadcrumb path="overflow"/></Row>
+    <Row><TabItem label="Visão geral" active/><TabItem label="Tabelão"/><TabItem label="Inteligência" disabled/></Row>
+    <Row><NavigationPagination page={3} totalPages={9}/></Row>
+    <Row><SearchGlobalSearch/></Row>
+    <Row><NavigationStepper state="default"/></Row>
+    <Row>
+      <button onClick={()=>setCmdOpen(true)} style={{fontFamily:'var(--font-sans)',fontSize:12,padding:'6px 10px',borderRadius:6,border:'1px solid var(--color-border-default)',background:'var(--color-surface-raised)',cursor:'pointer'}}>Abrir NavigationCommandPalette (⌘K)</button>
+    </Row>
+    <NavigationCommandPalette open={cmdOpen} onOpenChange={setCmdOpen} items={[
+      {header:'Navegar'},
+      {label:'Ir para Catálogo', shortcut:'G C', onRun:()=>{}},
+      {label:'Ir para Publicações', shortcut:'G P', onRun:()=>{}},
+      {divider:true},
+      {label:'Criar novo relatório', onRun:()=>{}},
+    ]}/>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

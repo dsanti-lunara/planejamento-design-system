@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Login Flow" description="Login definitivo: AuthSplitScreen 100dvh + AuthLoginScreen com estados default/typing/loading/erro de validação/credenciais inválidas/success, redirecionando para a home do Portal (ou returnUrl)" -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0;padding:0;height:100%;overflow:hidden}</style></helmet>
+<div style="width:100%;height:100dvh;min-height:100dvh;overflow:hidden;background:var(--color-surface-page)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AuthLoginScreen" style="width:100%;height:100%" username="{{ username }}" password="{{ password }}" language="{{ language }}" state="{{ authState }}" usernameError="{{ usernameError }}" passwordError="{{ passwordError }}" credentialsError="{{ credentialsError }}" onUsernameChange="{{ handleUsernameChange }}" onPasswordChange="{{ handlePasswordChange }}" onUsernameBlur="{{ handleUsernameBlur }}" onPasswordBlur="{{ handlePasswordBlur }}" onLanguageChange="{{ handleLanguageChange }}" onDismissCredentialsError="{{ dismissCredentialsError }}" onSubmit="{{ handleSubmit }}" hint-size="100%,100%">Entrar</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;typing&quot;,&quot;loading&quot;,&quot;validation error&quot;,&quot;invalid credentials&quot;,&quot;success&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Estados&quot;},&quot;returnUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rotas&quot;},&quot;homeRoute&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;../portal-home/PortalHome.dc.html&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rotas&quot;}}">
+class Component extends DCLogic {
+  // States: default -> typing -> (blur on empty required field) validation error
+  // -> submit -> loading -> invalid credentials (form-level alert) | success -> navigate.
+  state = { username: '', password: '', language: 'Português (Brasil)', authState: 'default', usernameError: false, passwordError: false, credentialsError: '' };
+
+  // Portal root for this preview. Real deployment: '/'.
+  homeRoute() { return this.props.homeRoute || '../portal-home/PortalHome.dc.html'; }
+
+  // Return URL is preserved when the user was bounced to /login from another route.
+  // Only same-document relative targets are honoured (no absolute/protocol URLs).
+  returnUrl() {
+    let raw = this.props.returnUrl || '';
+    if (!raw) {
+      try {
+        const q = new URLSearchParams(window.location.search);
+        raw = q.get('returnUrl') || q.get('next') || q.get('redirect') || '';
+      } catch (e) { raw = ''; }
+    }
+    if (!raw) return '';
+    if (/^[a-z]+:/i.test(raw) || raw.startsWith('//')) return '';
+    return raw;
+  }
+
+  handleUsernameChange = (e) => this.setState({ username: e.target.value, authState: 'typing', usernameError: false, credentialsError: '' });
+  handlePasswordChange = (e) => this.setState({ password: e.target.value, authState: 'typing', passwordError: false, credentialsError: '' });
+  handleLanguageChange = (e) => this.setState({ language: e.target.value });
+
+  handleUsernameBlur = () => { if (!this.state.username.trim()) this.setState({ usernameError: true }); };
+  handlePasswordBlur = () => { if (!this.state.password.trim()) this.setState({ passwordError: true }); };
+
+  dismissCredentialsError = () => this.setState({ credentialsError: '' });
+
+  handleSubmit = (values = {}) => {
+    if (this.state.authState === 'loading' || this.state.authState === 'success') return;
+    const username = (values.username ?? this.state.username).trim();
+    const password = (values.password ?? this.state.password).trim();
+    const usernameError = !username;
+    const passwordError = !password;
+    if (usernameError || passwordError) { this.setState({ usernameError, passwordError }); return; }
+    this.setState({ authState: 'loading', credentialsError: '' });
+    window.setTimeout(() => {
+      // Demo credential check (no backend): password must be at least 4 chars.
+      if (password.length < 4) {
+        this.setState({ authState: 'default', credentialsError: 'Usuário ou senha inválidos. Verifique os dados e tente novamente.' });
+        return;
+      }
+      this.setState({ authState: 'success' });
+      window.setTimeout(() => { window.location.href = this.returnUrl() || this.homeRoute(); }, 700);
+    }, 900);
+  };
+
+  // Frozen presentation for design review, independent of live interaction.
+  preview() {
+    switch (this.props.previewState) {
+      case 'typing': return { username: 'ana.souza', password: 'sen', authState: 'typing' };
+      case 'loading': return { username: 'ana.souza', password: 'senha123', authState: 'loading' };
+      case 'validation error': return { username: '', password: '', authState: 'default', usernameError: true, passwordError: true };
+      case 'invalid credentials': return { username: 'ana.souza', password: 'abc', authState: 'default', credentialsError: 'Usuário ou senha inválidos. Verifique os dados e tente novamente.' };
+      case 'success': return { username: 'ana.souza', password: 'senha123', authState: 'success' };
+      default: return null;
+    }
+  }
+
+  renderVals() {
+    const s = { ...this.state, ...(this.preview() || {}) };
+    return {
+      username: s.username,
+      password: s.password,
+      language: s.language ?? this.state.language,
+      authState: s.authState,
+      usernameError: !!s.usernameError,
+      passwordError: !!s.passwordError,
+      credentialsError: s.credentialsError || '',
+      handleUsernameChange: this.handleUsernameChange,
+      handlePasswordChange: this.handlePasswordChange,
+      handleUsernameBlur: this.handleUsernameBlur,
+      handlePasswordBlur: this.handlePasswordBlur,
+      handleLanguageChange: this.handleLanguageChange,
+      dismissCredentialsError: this.dismissCredentialsError,
+      handleSubmit: this.handleSubmit,
+    };
+  }
+}
+</script>
+</body>
+</html>

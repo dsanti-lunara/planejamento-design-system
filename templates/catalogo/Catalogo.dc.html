@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Catálogo" description="Catálogo oficial de produtos do Nexo: busca, categorias, tags, ordenação, grid responsivo e paginação — navega para templates/detalhe-produto" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:Inter,sans-serif;font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="portal" breadcrumb="{{ false }}" notifications="{{ true }}" user="{{ topbarUser }}" onSearchClick="{{ openPalette }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationCommandPalette" open="{{ paletteOpen }}" onOpenChange="{{ setPaletteOpen }}" items="{{ paletteItems }}" hint-size="0,0"></x-import>
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<div style="display:flex;flex-direction:column;gap:8px;width:100%;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" path="short" icon1="{{ crumbHome }}" icon3="{{ crumbCurrent }}" style="width:auto;max-width:100%" hint-size="220px,24px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:4px;width:100%;min-width:0">
+<h1 style="margin:0;font-size:26px;line-height:32px;font-weight:700;color:var(--color-text-primary);word-break:break-word">{{ pageTitle }}</h1>
+<p style="margin:0;font-size:13px;line-height:18px;color:var(--color-text-secondary);max-width:640px">{{ pageDescription }}</p>
+<span style="font-size:12px;color:var(--color-text-muted)">{{ resultCountLabel }}</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;width:100%;min-width:0;padding-bottom:4px;border-bottom:1px solid var(--color-border-subtle)">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" type="search" placeholder="Buscar neste catálogo" value="{{ searchQuery }}" onChange="{{ setSearchQuery }}" style="flex:1 1 320px;min-width:240px;max-width:none;width:auto" hint-size="300px,38px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Field" type="select" label="Ordenar por" value="{{ sort }}" options="{{ sortOptions }}" onChange="{{ setSort }}" style="width:220px;flex-shrink:0;margin-left:auto" hint-size="220px,52px"></x-import>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;width:100%;min-width:0">
+<span style="font-size:11px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-text-muted)">Categorias</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px;width:100%;min-width:0">
+<sc-for list="{{ categoryChips }}" as="c" hint-placeholder-count="7">
+<div onclick="{{ c.onClick }}" style="cursor:pointer;border-radius:999px;position:relative">
+<sc-if value="{{ c.selected }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagCategoryChip" category="{{ c.key }}" label="{{ c.label }}" style="box-shadow:inset 0 0 0 2px var(--color-action-primary),0 1px 3px rgba(15,23,42,0.12)" hint-size="90px,28px"></x-import>
+<span style="position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:999px;background:var(--color-action-primary);box-shadow:0 0 0 2px var(--color-surface-canvas)"></span>
+</sc-if>
+<sc-if value="{{ c.unselected }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagCategoryChip" category="{{ c.key }}" label="{{ c.label }}" style="background-color:var(--color-surface-card);box-shadow:inset 0 0 0 1px var(--color-border-subtle);opacity:0.75" hint-size="90px,28px"></x-import>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;width:100%;min-width:0">
+<span style="font-size:11px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-text-muted)">Tags</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px;width:100%;min-width:0">
+<sc-for list="{{ tagChips }}" as="t" hint-placeholder-count="6">
+<div onclick="{{ t.onClick }}" style="cursor:pointer">
+<sc-if value="{{ t.selected }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagFilterChip" label="" value="{{ t.label }}" removeAction="{{ false }}" style="gap:0" hint-size="90px,28px"></x-import>
+</sc-if>
+<sc-if value="{{ t.unselected }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagFilterChip" label="" value="{{ t.label }}" removeAction="{{ false }}" style="gap:0;background-color:var(--color-surface-card);box-shadow:inset 0 0 0 1px var(--color-border-subtle)" hint-size="90px,28px"></x-import>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{ hasActiveFilters }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:8px 10px;width:100%;min-width:0;padding:6px 10px;border-radius:8px;background:var(--color-surface-selected);box-sizing:border-box;align-items:center">
+<span style="font-size:11px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-action-primary);flex-shrink:0">Filtros ativos</span>
+<sc-if value="{{ hasCategoryFilter }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ clearCategory }}" style="cursor:pointer">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagFilterChip" label="Categoria:" value="{{ activeCategoryLabel }}" style="background-color:var(--color-surface-raised)" hint-size="120px,28px"></x-import>
+</div>
+</sc-if>
+<sc-for list="{{ activeTagChips }}" as="at" hint-placeholder-count="0">
+<div onclick="{{ at.onClick }}" style="cursor:pointer">
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagFilterChip" label="Tag:" value="{{ at.label }}" style="background-color:var(--color-surface-raised)" hint-size="100px,28px"></x-import>
+</div>
+</sc-for>
+<sc-if value="{{ showClearAll }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Limpar filtros" size="compact" style2="tertiary" onClick="{{ clearAllFilters }}" style="margin-left:auto;flex-shrink:0" hint-size="90px,28px"></x-import>
+</sc-if>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.LayoutProductGrid" style="width:100%" hint-size="100%,400px">
+<sc-for list="{{ pageItems }}" as="p" hint-placeholder-count="8">
+<div onclick="{{ p.onClick }}" style="cursor:pointer;width:100%;height:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductCard" context="catalog" name="{{ p.name }}" description="{{ p.description }}" productLogo="{{ p.productLogo }}" category="{{ p.categoryKey }}" categoryLabel="{{ p.categoryLabel }}" showTags="{{ true }}" tags="{{ p.tags }}" showCTA="{{ true }}" cTA="{{ p.cta }}" showAccess="{{ true }}" access="{{ p.access }}" showFavorite="{{ true }}" favorite="{{ p.favorite }}" style="width:100%" hint-size="100%,250px"></x-import>
+</div>
+</sc-for>
+</x-import>
+</sc-if>
+
+<sc-for list="{{ emptyStateSlot }}" as="e" hint-placeholder-count="0">
+<div style="display:flex;justify-content:center;width:100%;padding:24px 0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Nenhum produto encontrado" text2="Ajuste a busca, categoria ou tags selecionadas." style="width:100%;max-width:420px" hint-size="420px,190px"></x-import>
+</div>
+</sc-for>
+
+<sc-if value="{{ showPagination }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:center;width:100%;padding-top:8px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationPagination" page="{{ page }}" totalPages="{{ totalPages }}" onPageChange="{{ setPage }}" hint-size="240px,36px"></x-import>
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, selectedCategory: null, selectedTags: [], sort: 'Relevância', page: 1, searchQuery: '', paletteOpen: false };
+
+  categoriesData = [
+    { key: 'todos', label: 'Todos os produtos', iconName: 'IconNavPortal' },
+    { key: 'operacional', label: 'Operacional', iconName: 'IconNavIntraday' },
+    { key: 'planejamento', label: 'Planejamento', iconName: 'IconCalendar' },
+    { key: 'financeiro', label: 'Financeiro', iconName: 'IconNavFinance' },
+    { key: 'gestão', label: 'Gestão', iconName: 'IconNavCapacity' },
+    { key: 'clientes', label: 'Clientes', iconName: 'IconNavDemand' },
+    { key: 'dados & inteligência', label: 'Dados & Inteligência', iconName: 'IconDataState' },
+  ];
+
+  productsData = [
+    { id: 'claro-brasil', name: 'Claro Brasil', categoryKey: 'operacional', description: 'Visão integrada de operação, receita e desempenho comercial.', initials: 'CB', access: 'authorized', tags: ['Claro', 'Intraday'] },
+    { id: 'sentinel', name: 'Sentinel', categoryKey: 'operacional', description: 'Monitoramento de rede, incidentes e qualidade de serviço.', initials: 'SN', access: 'authorized', tags: ['Rede', 'Monitoramento'] },
+    { id: 'auditoria-legada', name: 'Auditoria Legada', categoryKey: 'operacional', description: 'Registros históricos de auditoria operacional descontinuada.', initials: 'AL', access: 'archived', tags: ['Legado', 'Auditoria'] },
+    { id: 'banco-de-horas', name: 'Banco de Horas', categoryKey: 'gestão', description: 'Acompanhamento de saldo, utilizações e previsões da equipe.', initials: 'BH', access: 'restricted', tags: ['RH', 'Equipe'] },
+    { id: 'planejamento-orcamentario', name: 'Planejamento Orçamentário', categoryKey: 'planejamento', description: 'Planeje cenários, metas e orçamento de forma colaborativa.', initials: 'PO', access: 'authorized', tags: ['Orçamento', 'Cenários'] },
+    { id: 'forecast-de-demanda', name: 'Forecast de Demanda', categoryKey: 'planejamento', description: 'Projeções de volume e dimensionamento por canal.', initials: 'FD', access: 'restricted', tags: ['Forecast', 'Canal'] },
+    { id: 'painel-de-clientes', name: 'Painel de Clientes', categoryKey: 'clientes', description: 'Satisfação, churn e jornada dos principais contratos.', initials: 'PC', access: 'authorized', tags: ['Churn', 'NPS'] },
+    { id: 'qualidade-de-dados', name: 'Qualidade de Dados', categoryKey: 'dados & inteligência', description: 'Monitoramento de qualidade e versões dos datasets.', initials: 'QD', access: 'archived', tags: ['Governança', 'Datasets'] },
+    { id: 'indicadores-financeiros', name: 'Indicadores Financeiros', categoryKey: 'financeiro', description: 'Receita, custo e margem consolidados por unidade.', initials: 'IF', access: 'authorized', tags: ['Receita', 'Margem'] },
+  ];
+
+  // /produtos?q=&categoria=&tag= — estado compartilhável via query string
+  componentDidMount() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get('categoria');
+      const q = params.get('q');
+      const tags = params.getAll('tag').flatMap((t) => t.split(',')).map((t) => t.trim()).filter(Boolean);
+      const known = [...new Set(this.productsData.flatMap((p) => p.tags))];
+      const norm = (s) => s.toLowerCase();
+      const selectedTags = tags.map((t) => known.find((k) => norm(k) === norm(t))).filter(Boolean);
+      const next = {};
+      if (cat && this.categoriesData.some((c) => c.key === cat) && cat !== 'todos') next.selectedCategory = cat;
+      if (q) next.searchQuery = q;
+      if (selectedTags.length) next.selectedTags = selectedTags;
+      if (Object.keys(next).length) this.setState(next);
+      else this.syncUrl(this.state);
+    } catch (e) {}
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const k = (s) => [s.searchQuery, s.selectedCategory, s.selectedTags.join('|')].join('§');
+    if (k(prevState) !== k(this.state)) this.syncUrl(this.state);
+  }
+
+  syncUrl(s) {
+    try {
+      const params = new URLSearchParams();
+      if (s.searchQuery && s.searchQuery.trim()) params.set('q', s.searchQuery.trim());
+      if (s.selectedCategory) params.set('categoria', s.selectedCategory);
+      s.selectedTags.forEach((t) => params.append('tag', t));
+      const qs = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+    } catch (e) {}
+  }
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  productLogo(initials) { const Cmp = this.ns().BrandProductLogoTile; return Cmp ? React.createElement(Cmp, { fallback: initials, size: 'md', shape: 'rounded', background: 'subtle' }) : null; }
+  accessLabel(a) { return a === 'authorized' ? 'Autorizado' : a === 'restricted' ? 'Restrito' : a === 'archived' ? 'Arquivado' : a; }
+  ctaLabel(a) { return a === 'authorized' ? 'Abrir' : a === 'restricted' ? 'Consultar acesso' : 'Ver detalhes'; }
+  ctaStyle(a) { return 'secondary'; }
+  catLabel(key) { return (this.categoriesData.find(c => c.key === key) || {}).label ?? key; }
+
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  navigateToAdmin = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  // rota /produtos/:productId
+  navigateToProduct = (p) => { window.location.href = '../detalhe-produto/DetalheProduto.dc.html?id=' + encodeURIComponent(p.id) + '&produto=' + encodeURIComponent(p.name) + '&estado=' + encodeURIComponent(p.access); };
+  selectCategory = (key) => this.setState({ selectedCategory: key === 'todos' ? null : key, page: 1 });
+  clearCategory = () => this.setState({ selectedCategory: null, page: 1 });
+  clearAllFilters = () => this.setState({ selectedCategory: null, selectedTags: [], page: 1 });
+  toggleTag = (tag) => this.setState((s) => ({ selectedTags: s.selectedTags.includes(tag) ? s.selectedTags.filter((t) => t !== tag) : [...s.selectedTags, tag], page: 1 }));
+  removeTag = (tag) => this.setState((s) => ({ selectedTags: s.selectedTags.filter((t) => t !== tag), page: 1 }));
+  setSort = (v) => this.setState({ sort: v, page: 1 });
+  setSearchQuery = (v) => this.setState({ searchQuery: v, page: 1 });
+  setPage = (p) => this.setState({ page: p });
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  openPalette = () => this.setState({ paletteOpen: true });
+  setPaletteOpen = (v) => this.setState({ paletteOpen: !!v });
+
+  renderVals() {
+    const { sidebarCollapsed, selectedCategory, selectedTags, sort, page, searchQuery } = this.state;
+    const ns = this.ns();
+    const catObj = this.categoriesData.find((c) => c.key === selectedCategory);
+    const pageTitle = catObj ? catObj.label : 'Todos os produtos';
+    const pageDescription = catObj ? `Produtos disponíveis na categoria ${catObj.label}.` : 'Explore, acesse e descubra todos os produtos disponíveis no Nexo.';
+
+    let list = this.productsData.filter((p) => !selectedCategory || p.categoryKey === selectedCategory);
+    if (selectedTags.length) list = list.filter((p) => selectedTags.every((t) => p.tags.includes(t)));
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q)));
+    }
+    if (sort === 'Nome (A-Z)') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'Categoria') list = [...list].sort((a, b) => this.catLabel(a.categoryKey).localeCompare(this.catLabel(b.categoryKey)));
+
+    const pageSize = 8;
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageSlice = list.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    const availableTags = [...new Set((selectedCategory ? this.productsData.filter((p) => p.categoryKey === selectedCategory) : this.productsData).flatMap((p) => p.tags))];
+
+    const pageItems = pageSlice.map((p) => ({
+      ...p,
+      categoryLabel: this.catLabel(p.categoryKey),
+      productLogo: this.productLogo(p.initials),
+      access: React.createElement(ns.AccessStatus, { state: p.access, label: this.accessLabel(p.access) }),
+      favorite: React.createElement('span', { onClick: (e) => e.stopPropagation(), style: { display: 'contents' } }, React.createElement(ns.ActionFavorite, { size: 'sm', state: 'not favorite' })),
+      cta: React.createElement(ns.Button, { label: this.ctaLabel(p.access), size: 'compact', style2: this.ctaStyle(p.access), onClick: (e) => { e.stopPropagation(); this.navigateToProduct(p); } }),
+      onClick: () => this.navigateToProduct(p),
+    }));
+
+    const categoryChips = this.categoriesData.map((c) => {
+      const selected = (selectedCategory || 'todos') === c.key;
+      return { key: c.key, label: c.label, onClick: () => this.selectCategory(c.key), selected, unselected: !selected };
+    });
+
+    const tagChips = availableTags.map((t) => {
+      const selected = selectedTags.includes(t);
+      return { label: t, onClick: () => this.toggleTag(t), selected, unselected: !selected };
+    });
+
+    const activeTagChips = selectedTags.map((t) => ({ label: t, onClick: () => this.removeTag(t) }));
+
+    const hasResults = pageItems.length > 0;
+
+    return {
+      pageTitle, pageDescription,
+      resultCountLabel: `${list.length} produto${list.length === 1 ? '' : 's'} encontrado${list.length === 1 ? '' : 's'}`,
+      crumbHome: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } }, React.createElement(ns.NavigationBreadcrumbItem, { label: 'Início', state: 'default' })),
+      crumbCurrent: React.createElement(ns.NavigationBreadcrumbItem, { label: pageTitle, state: 'current' }),
+      topbarUser: { name: 'Ana Ferreira', role: 'Planejamento Analytics' },
+      sort, sortOptions: ['Relevância', 'Nome (A-Z)', 'Categoria'], setSort: this.setSort,
+      searchQuery, setSearchQuery: this.setSearchQuery,
+      openPalette: this.openPalette,
+      paletteOpen: this.state.paletteOpen, setPaletteOpen: this.setPaletteOpen,
+      paletteItems: [
+        { header: 'Navegar' },
+        { label: 'Início', keywords: 'portal home', onRun: this.goHome },
+        { label: 'Catálogo de produtos', keywords: 'produtos catalogo', onRun: () => this.clearAllFilters() },
+        { header: 'Produtos' },
+        ...this.productsData.map((p) => ({ id: p.id, label: p.name, keywords: p.categoryKey + ' ' + p.description + ' ' + p.tags.join(' '), onRun: () => this.navigateToProduct(p) })),
+      ],
+      categoryChips, tagChips,
+      hasActiveFilters: !!selectedCategory || selectedTags.length > 0,
+      showClearAll: (!!selectedCategory ? 1 : 0) + selectedTags.length >= 2,
+      clearAllFilters: this.clearAllFilters,
+      hasCategoryFilter: !!selectedCategory,
+      activeCategoryLabel: catObj ? catObj.label : '',
+      clearCategory: this.clearCategory,
+      activeTagChips,
+      hasResults,
+      showPagination: hasResults && totalPages > 1,
+      emptyStateSlot: hasResults ? [] : [1],
+      pageItems,
+      page: safePage, totalPages, setPage: this.setPage,
+      sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Início', icon: this.icon('IconNavHome'), onClick: this.goHome },
+        { section: 'CATÁLOGO' },
+        ...this.categoriesData.map((c) => ({ label: c.label, icon: this.icon(c.iconName), active: (selectedCategory || 'todos') === c.key, onClick: () => this.selectCategory(c.key) })),
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Administração', icon: this.icon('IconNavGovernance'), onClick: this.navigateToAdmin },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!-- @dsCard group="Spacing" viewport="760x300" name="Radius & Shadow" subtitle="raios discretos + elevação por sombra sutil (base rgba(8,26,41))" -->
+<link rel="stylesheet" href="../styles.css">
+<div style="padding:16px;background:var(--color-surface-card);font-family:var(--font-sans);display:flex;flex-direction:column;gap:16px">
+<div>
+<div style="font-size:11px;font-weight:600;color:var(--color-text-primary);margin-bottom:8px">Radius</div>
+<div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-4)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">4 · badge/tag</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-6)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">6 · input</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-7)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">7 · paginação</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-8)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">8 · botão/card</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-10)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">10 · card grande</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-12)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">12 · painel/modal</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:52px;border-radius:calc(var(--radius-16)*1px);background:var(--color-surface-subtle);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">16 · hero/destaque</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:52px;height:24px;border-radius:calc(var(--radius-pill)*1px);background:var(--color-action-primary)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">pill · toggle/chip</span></div>
+</div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:600;color:var(--color-text-primary);margin-bottom:8px">Shadow</div>
+<div style="display:flex;gap:18px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:88px;height:56px;border-radius:8px;background:var(--color-surface-card);box-shadow:var(--shadow-border)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">border · card padrão</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:88px;height:56px;border-radius:8px;background:var(--color-surface-card);box-shadow:var(--shadow-card)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">card · KPI/stat</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:88px;height:56px;border-radius:8px;background:var(--color-surface-card);box-shadow:var(--shadow-raised)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">raised · card em foco</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:88px;height:56px;border-radius:8px;background:var(--color-surface-raised);box-shadow:var(--shadow-overlay)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">overlay · popover/menu</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><div style="width:88px;height:56px;border-radius:8px;background:var(--color-action-primary);box-shadow:var(--shadow-focus-ring)"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--color-text-muted)">focus-ring · teclado</span></div>
+</div>
+<div style="margin-top:8px;font-size:11px;color:var(--color-text-secondary);max-width:600px">Elevação vem de sombras sutis com base neutra (rgba(8,26,41)), quase nunca de border colorido — reforça a hierarquia sem pesar visualmente. Tokens em <code style="font-family:var(--font-mono)">tokens/elevation.css</code>; hover/press dos botões usam <code style="font-family:var(--font-mono)">--shadow-hover</code>/<code style="font-family:var(--font-mono)">--shadow-pressed</code>.</div>
+</div>
+</div>

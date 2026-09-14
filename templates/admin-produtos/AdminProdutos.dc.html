@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Produtos" description="Lista administrativa de produtos do Nexo — KPIs, filtros, tabela de estados e paginação. Contexto administrativo (não mistura com categorias do Catálogo)." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ openPalette }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationCommandPalette" open="{{ paletteOpen }}" onOpenChange="{{ setPaletteOpen }}" items="{{ paletteItems }}" hint-size="0,0"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:14px;padding:20px 24px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminPageHeader" title="Produtos" description="Cadastro e ciclo de vida dos produtos publicados no Nexo." primaryAction="{{ true }}" primaryLabel="Novo produto" onPrimaryAction="{{ goNew }}" overflow="{{ true }}" overflowItems="{{ headerOverflowItems }}" style="width:100%;height:auto" hint-size="100%,72px"></x-import>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;width:100%;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="Total de produtos" value="{{ kpiTotal }}" showTrend="{{ true }}" secondary="{{ kpiTotalSecondary }}" secondaryTone="neutral" showIcon="{{ true }}" icon="{{ iconStructure }}" style="width:100%;height:auto" hint-size="100%,112px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="Ativos" value="{{ kpiActive }}" showTrend="{{ true }}" secondary="{{ kpiActiveSecondary }}" secondaryTone="positive" showIcon="{{ true }}" icon="{{ iconPlay }}" style="width:100%;height:auto" hint-size="100%,112px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="Em homologação" value="{{ kpiHomolog }}" showTrend="{{ true }}" secondary="{{ kpiHomologSecondary }}" secondaryTone="info" showIcon="{{ true }}" icon="{{ iconDataState }}" style="width:100%;height:auto" hint-size="100%,112px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="Necessitam atenção" value="{{ kpiAttention }}" showTrend="{{ true }}" secondary="{{ kpiAttentionSecondary }}" secondaryTone="warning" showIcon="{{ false }}" style="width:100%;height:auto" hint-size="100%,112px"></x-import>
+</div>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" showSearch="{{ true }}" searchPlaceholder="Buscar por nome ou responsável" searchValue="{{ searchQuery }}" onSearchChange="{{ setSearchQuery }}" showStatus="{{ true }}" statusLabel="Status" statusOptions="{{ statusOptions }}" statusValue="{{ statusFilter }}" onStatusChange="{{ setStatusFilter }}" showProduct="{{ true }}" productLabel="Categoria" productOptions="{{ categoryOptions }}" productValue="{{ categoryFilter }}" onProductChange="{{ setCategoryFilter }}" showPeriod="{{ false }}" clearFilters="{{ hasActiveFilters }}" onClearFilters="{{ clearFilters }}" activeFilters="{{ hasActiveFilters }}" activeFilterChips="{{ activeFilterChips }}" onMoreFilters="{{ openMoreFilters }}" style="width:100%" hint-size="100%,64px"></x-import>
+
+<sc-if value="{{ isMoreFiltersOpen }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--color-surface-card);border-radius:12px;padding:14px 16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" showSearch="{{ false }}" showStatus="{{ false }}" showProduct="{{ true }}" productLabel="Tipo de conteúdo" productOptions="{{ contentTypeOptions }}" productValue="{{ contentTypeFilter }}" onProductChange="{{ setContentTypeFilter }}" showPeriod="{{ false }}" style="min-width:220px" hint-size="220px,56px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" size="compact" onClick="{{ closeMoreFilters }}" hint-size="90px,32px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ columns }}" rows="{{ pageRows }}" rowKey="{{ rowKey }}" onRowClick="{{ onRowClick }}" hoverable="{{ true }}" density="compact" stickyHeader="{{ true }}" style="width:100%" hint-size="100%,480px"></x-import>
+</sc-if>
+
+<sc-for list="{{ emptyStateSlot }}" as="e" hint-placeholder-count="0">
+<div style="display:flex;justify-content:center;width:100%;padding:24px 0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Nenhum produto encontrado" text2="Ajuste a busca, o status ou a categoria selecionados." style="width:100%;max-width:420px" hint-size="420px,190px"></x-import>
+</div>
+</sc-for>
+
+<sc-if value="{{ showPagination }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding-top:4px">
+<span style="font-family:var(--font-sans);font-size:12px;color:var(--color-text-muted)">{{ resultCountLabel }}</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationPagination" page="{{ page }}" totalPages="{{ totalPages }}" onPageChange="{{ setPage }}" hint-size="240px,36px"></x-import>
+</div>
+</sc-if>
+
+</div>
+</div>
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;right:24px;bottom:24px;z-index:40;max-width:360px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FeedbackAlert" tone="info" title="{{ toastMessage }}" dismiss="{{ true }}" onDismiss="{{ dismissToast }}" style="width:100%" hint-size="340px,56px"></x-import>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, searchQuery: '', statusFilter: [], categoryFilter: [], contentTypeFilter: [], page: 1, paletteOpen: false, moreFiltersOpen: false, toast: null, stateOverrides: {}, extraProducts: [] };
+
+  categoriesData = [
+    { key: 'operacional', label: 'Operacional' },
+    { key: 'planejamento', label: 'Planejamento' },
+    { key: 'financeiro', label: 'Financeiro' },
+    { key: 'gestão', label: 'Gestão' },
+    { key: 'clientes', label: 'Clientes' },
+    { key: 'dados & inteligência', label: 'Dados & Inteligência' },
+  ];
+
+  statesData = {
+    draft: { label: 'Rascunho', tone: 'neutral' },
+    homologation: { label: 'Homologação', tone: 'info' },
+    active: { label: 'Ativo', tone: 'positive' },
+    maintenance: { label: 'Manutenção', tone: 'warning' },
+    deprecated: { label: 'Descontinuado', tone: 'negative' },
+    archived: { label: 'Arquivado', tone: 'neutral' },
+  };
+
+  productsData = [
+    { id: 'claro-brasil', name: 'Claro Brasil', initials: 'CB', categoryKey: 'operacional', state: 'active', owner: 'Ana Ferreira', updatedAt: '24/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'sentinel', name: 'Sentinel', initials: 'SN', categoryKey: 'operacional', state: 'active', owner: 'Rafael Lima', updatedAt: '23/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'banco-de-horas', name: 'Banco de Horas', initials: 'BH', categoryKey: 'gestão', state: 'maintenance', owner: 'Camila Nunes', updatedAt: '20/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'planejamento-orcamentario', name: 'Planejamento Orçamentário', initials: 'PO', categoryKey: 'planejamento', state: 'homologation', owner: 'Bruno Costa', updatedAt: '19/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'forecast-de-demanda', name: 'Forecast de Demanda', initials: 'FD', categoryKey: 'planejamento', state: 'draft', owner: 'Bruno Costa', updatedAt: '12/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'painel-de-clientes', name: 'Painel de Clientes', initials: 'PC', categoryKey: 'clientes', state: 'active', owner: 'Ana Ferreira', updatedAt: '24/08/2026', contentType: 'Power BI' },
+    { id: 'qualidade-de-dados', name: 'Qualidade de Dados', initials: 'QD', categoryKey: 'dados & inteligência', state: 'homologation', owner: 'Camila Nunes', updatedAt: '18/08/2026', contentType: 'Projeto Nexo' },
+    { id: 'indicadores-financeiros', name: 'Indicadores Financeiros', initials: 'IF', categoryKey: 'financeiro', state: 'active', owner: 'Rafael Lima', updatedAt: '22/08/2026', contentType: 'Power BI' },
+    { id: 'auditoria-legada', name: 'Auditoria Legada', initials: 'AL', categoryKey: 'operacional', state: 'deprecated', owner: 'Rafael Lima', updatedAt: '02/07/2026', contentType: 'Projeto Nexo' },
+    { id: 'painel-de-clientes-360-legado', name: 'Painel de Clientes 360 (legado)', initials: 'PL', categoryKey: 'clientes', state: 'archived', owner: 'Ana Ferreira', updatedAt: '30/06/2026', contentType: 'Power BI' },
+  ];
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  catLabel(key) { return (this.categoriesData.find((c) => c.key === key) || {}).label ?? key; }
+
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goNew = () => { window.location.href = '../admin-produtos-novo/AdminProdutoNovo.dc.html'; };
+  goDetail = (id) => { window.location.href = '../admin-produtos-detalhe/AdminProdutoDetalhe.dc.html?id=' + encodeURIComponent(id); };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  openPalette = () => this.setState({ paletteOpen: true });
+  setPaletteOpen = (v) => this.setState({ paletteOpen: !!v });
+  setSearchQuery = (v) => this.setState({ searchQuery: v, page: 1 });
+  setStatusFilter = (v) => this.setState({ statusFilter: v, page: 1 });
+  setCategoryFilter = (v) => this.setState({ categoryFilter: v, page: 1 });
+  setContentTypeFilter = (v) => this.setState({ contentTypeFilter: v, page: 1 });
+  openMoreFilters = () => this.setState({ moreFiltersOpen: true });
+  closeMoreFilters = () => this.setState({ moreFiltersOpen: false });
+  clearFilters = () => this.setState({ statusFilter: [], categoryFilter: [], contentTypeFilter: [], searchQuery: '', page: 1 });
+  setPage = (p) => this.setState({ page: p });
+  showToast = (msg) => { clearTimeout(this._toastTimer); this.setState({ toast: msg }); this._toastTimer = window.setTimeout(() => this.setState({ toast: null }), 3200); };
+  dismissToast = () => { clearTimeout(this._toastTimer); this.setState({ toast: null }); };
+  archiveProduct = (p) => { this.setState((s) => ({ stateOverrides: { ...s.stateOverrides, [p.id]: 'archived' } })); this.showToast('"' + p.name + '" foi arquivado.'); };
+  duplicateProduct = (p) => {
+    const copy = { ...p, id: p.id + '-copia-' + Date.now(), name: p.name + ' (cópia)', state: 'draft', updatedAt: new Date().toLocaleDateString('pt-BR') };
+    this.setState((s) => ({ extraProducts: [copy, ...s.extraProducts] }));
+    this.showToast('"' + p.name + '" foi duplicado como rascunho.');
+  };
+
+  renderVals() {
+    const { sidebarCollapsed, searchQuery, statusFilter, categoryFilter, contentTypeFilter, page } = this.state;
+    const ns = this.ns();
+    const statusLabels = Object.values(this.statesData).map((s) => s.label);
+    const categoryLabels = this.categoriesData.map((c) => c.label);
+
+    const allProducts = [...this.state.extraProducts, ...this.productsData].map((p) => this.state.stateOverrides[p.id] ? { ...p, state: this.state.stateOverrides[p.id] } : p);
+    let list = allProducts;
+    if (statusFilter.length) list = list.filter((p) => statusFilter.includes(this.statesData[p.state].label));
+    if (categoryFilter.length) list = list.filter((p) => categoryFilter.includes(this.catLabel(p.categoryKey)));
+    if (contentTypeFilter.length) list = list.filter((p) => contentTypeFilter.includes(p.contentType));
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q));
+    }
+
+    const pageSize = 10;
+    const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageRows = list.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    const columns = [
+      { key: 'name', header: 'Produto', minWidth: 200, render: (row) => React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 } },
+        React.createElement(ns.BrandProductLogoTile, { fallback: row.initials, size: 'sm', shape: 'rounded', background: 'subtle' }),
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 } },
+          React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, row.name),
+          React.createElement('span', { title: '/produtos/' + row.id, style: { fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', maxWidth: '100%' } }, '/produtos/' + row.id))) },
+      { key: 'categoryKey', header: 'Categoria', width: 150, minWidth: 140, render: (row) => this.catLabel(row.categoryKey), muted: true },
+      { key: 'state', header: 'Estado', width: 120, minWidth: 120, render: (row) => React.createElement(ns.StatusBadge, { label: this.statesData[row.state].label, tone: this.statesData[row.state].tone }) },
+      { key: 'owner', header: 'Responsável', width: 150, minWidth: 150 },
+      { key: 'updatedAt', header: 'Atualizado', width: 115, minWidth: 110, mono: true },
+      { key: 'actions', header: '', width: 44, minWidth: 44, lockWidth: true, align: 'right', pin: 'right', render: (row) => React.createElement('div', { onClick: (e) => e.stopPropagation() },
+        React.createElement(ns.ActionOverflowMenu, { items: [
+          { label: 'Ver produto', onClick: () => this.goDetail(row.id) },
+          { label: 'Duplicar', onClick: () => this.duplicateProduct(row) },
+          { label: 'Arquivar', tone: 'negative', onClick: () => this.archiveProduct(row) },
+        ] })) },
+    ];
+
+    const activeCount = allProducts.filter((p) => p.state === 'active').length;
+    const homologCount = allProducts.filter((p) => p.state === 'homologation').length;
+    const attentionCount = allProducts.filter((p) => p.state === 'maintenance' || p.state === 'deprecated').length;
+
+    const hasResults = pageRows.length > 0;
+    const hasActiveFilters = !!(statusFilter.length || categoryFilter.length || contentTypeFilter.length || searchQuery.trim());
+    const activeFilterChips = [
+      ...(searchQuery.trim() ? [{ label: 'Busca:', value: searchQuery.trim(), onRemove: () => this.setSearchQuery('') }] : []),
+      ...statusFilter.map((v) => ({ label: 'Status:', value: v, onRemove: () => this.setStatusFilter(statusFilter.filter((x) => x !== v)) })),
+      ...categoryFilter.map((v) => ({ label: 'Categoria:', value: v, onRemove: () => this.setCategoryFilter(categoryFilter.filter((x) => x !== v)) })),
+      ...contentTypeFilter.map((v) => ({ label: 'Tipo:', value: v, onRemove: () => this.setContentTypeFilter(contentTypeFilter.filter((x) => x !== v)) })),
+    ];
+
+    return {
+      columns, pageRows, rowKey: (row) => row.id,
+      onRowClick: (row) => this.goDetail(row.id),
+      hasResults,
+      emptyStateSlot: hasResults ? [] : [1],
+      showPagination: hasResults && totalPages > 1,
+      resultCountLabel: list.length + ' produto' + (list.length === 1 ? '' : 's') + ' encontrado' + (list.length === 1 ? '' : 's'),
+      page: safePage, totalPages, setPage: this.setPage,
+      kpiTotal: String(allProducts.length), kpiTotalSecondary: 'cadastrados no Nexo',
+      kpiActive: String(activeCount), kpiActiveSecondary: activeCount + ' de ' + allProducts.length + ' produtos',
+      kpiHomolog: String(homologCount), kpiHomologSecondary: homologCount + ' em avaliação',
+      kpiAttention: String(attentionCount), kpiAttentionSecondary: attentionCount + ' em manutenção ou descontinuados',
+      iconStructure: this.icon('IconNavStructure'), iconPlay: this.icon('IconPlay'), iconDataState: this.icon('IconDataState'),
+      statusOptions: statusLabels, categoryOptions: categoryLabels, contentTypeOptions: ['Power BI', 'Projeto Nexo'],
+      statusFilter, categoryFilter, setStatusFilter: this.setStatusFilter, setCategoryFilter: this.setCategoryFilter,
+      contentTypeFilter, setContentTypeFilter: this.setContentTypeFilter,
+      isMoreFiltersOpen: this.state.moreFiltersOpen, openMoreFilters: this.openMoreFilters, closeMoreFilters: this.closeMoreFilters,
+      hasActiveFilters, activeFilterChips,
+      clearFilters: this.clearFilters,
+      searchQuery, setSearchQuery: this.setSearchQuery,
+      goNew: this.goNew,
+      headerOverflowItems: [
+        { label: 'Exportar lista', onClick: () => this.showToast('Exportação da lista de produtos iniciada.') },
+        { label: 'Configurar colunas', onClick: () => this.showToast('Configuração de colunas ainda não disponível nesta versão.') },
+      ],
+      hasToast: !!this.state.toast, toastMessage: this.state.toast, dismissToast: this.dismissToast,
+      openPalette: this.openPalette, paletteOpen: this.state.paletteOpen, setPaletteOpen: this.setPaletteOpen,
+      paletteItems: [
+        { header: 'Produtos' },
+        ...allProducts.map((p) => ({ id: p.id, label: p.name, keywords: p.owner + ' ' + this.catLabel(p.categoryKey), onRun: () => this.goDetail(p.id) })),
+      ],
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), active: true },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

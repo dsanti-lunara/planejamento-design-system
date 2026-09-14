@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Novo produto" description="Composição única (ProductFormTemplate) para criar e editar produtos do Nexo — mode='create' (rota /admin/produtos/novo) ou mode='edit' (?mode=edit&id=) via query string. Mesma FormFormSection/campos/handlers para os dois modos; nenhuma tela ou CSS duplicados." -->
+<!--
+  ProductFormTemplate contract (this file IS the shared composition — there is
+  no separate "editar" screen and none should be created):
+    mode         "create" | "edit"   — derived from ?mode=edit, drives title/CTA/lifecycle only
+    productData  the record loaded from `catalog` for the given ?id in edit mode
+    onSave       handleSave() — same function for both modes
+    onCancel     goCancel()   — same function for both modes
+  Any change to a FormFormSection/Field/InputText/FormSlugField/etc. below applies
+  to both Novo Produto and Editar Produto automatically — do not fork this file.
+-->
+
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<div style="display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<div ref="{{ navRef }}" style="flex-shrink:0;width:100%;position:sticky;top:0;z-index:3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="width:100%" hint-size="100%,56px"></x-import>
+</div>
+
+<div style="width:100%;max-width:920px;margin:0 auto;padding:20px 28px 0;box-sizing:border-box">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="260px,24px"></x-import>
+</div>
+
+<div style="position:sticky;top:{{ navTopH }}px;z-index:2;width:100%;background:var(--color-surface-canvas);border-bottom:1px solid var(--color-border-subtle);box-sizing:border-box">
+<div style="max-width:920px;margin:0 auto;padding:16px 28px;box-sizing:border-box">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminPageHeader" title="{{ pageTitle }}" description="{{ pageDescription }}" secondaryAction="{{ true }}" secondaryLabel="Cancelar" secondaryState="{{ secondaryActionState }}" onSecondaryAction="{{ goCancel }}" primaryAction="{{ true }}" primaryLabel="{{ saveLabel }}" primaryState="{{ primaryActionState }}" onPrimaryAction="{{ handleSave }}" style="width:100%;height:auto" hint-size="100%,84px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:20px 28px 28px;align-items:stretch;box-sizing:border-box;width:100%;max-width:920px;margin:0 auto;min-width:0">
+
+<sc-if value="{{ hasSaveError }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FeedbackAlert" tone="negative" title="{{ saveError }}" dismiss="{{ true }}" onDismiss="{{ clearSaveError }}" style="width:100%" hint-size="100%,56px"></x-import>
+</sc-if>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Identificação" description="Nome, slug e identidade visual do produto." contentSlot="{{ identificacaoSlot }}" style="width:100%" hint-size="100%,260px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Classificação" description="Categoria principal, tags, estado do ciclo de vida e tipo de conteúdo." contentSlot="{{ classificacaoSlot }}" style="width:100%" hint-size="100%,320px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Responsáveis" description="Product Owner, Tech Owner e Data Owner do produto." contentSlot="{{ responsaveisSlot }}" style="width:100%" hint-size="100%,220px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Configuração" description="Destaque na home do portal e pré-visualização do card." contentSlot="{{ configuracaoSlot }}" style="width:100%" hint-size="100%,220px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormDynamicRouteList" title="Rotas" description="Deep links adicionais publicados dentro do produto (ex.: /dashboard, /historico)." routes="{{ routes }}" onChange="{{ setRoutes }}" showErrors="{{ attemptedSave }}" onValidityChange="{{ setRoutesValid }}" style="width:100%" hint-size="100%,240px"></x-import>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormDynamicRouteList" title="Recursos" description="Links de documentação, dashboards externos ou repositórios relacionados ao produto (não são deep links do Runtime)." routes="{{ resources }}" onChange="{{ setResources }}" showErrors="{{ attemptedSave }}" onValidityChange="{{ setResourcesValid }}" style="width:100%" hint-size="100%,240px"></x-import>
+
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    name: '', slug: '', description: '',
+    category: '', tags: [], estado: 'Rascunho',
+    contentType: '', contentTypeLocked: false,
+    pbiLink: '', pbiHomePage: '',
+    po: null, tech: null, data: null,
+    openPicker: null,
+    destaqueEnabled: false, destaqueOrder: '1', destaqueVigencia: { preset: 'custom', start: '', end: '' },
+    slugTouched: false,
+    loaded: false,
+    saving: false,
+    routes: [],
+    resources: [],
+    routesValid: true,
+    resourcesValid: true,
+    attemptedSave: false,
+    navTopH: 56,
+    saveError: null,
+  };
+
+  navRef = React.createRef();
+  measureNav = () => {
+    const h = this.navRef.current && this.navRef.current.getBoundingClientRect().height;
+    if (h && Math.round(h) !== this.state.navTopH) this.setState({ navTopH: Math.round(h) });
+  };
+
+  categoryLabels = ['Operacional', 'Planejamento', 'Financeiro', 'Gestão', 'Clientes', 'Dados & Inteligência'];
+  estadoOptions = ['Rascunho', 'Homologação', 'Ativo', 'Manutenção', 'Descontinuado', 'Arquivado'];
+  contentTypeOptions = ['Power BI', 'Projeto Nexo'];
+  homePageOptions = ['Visão Geral', 'Resumo Mensal', 'Indicadores', 'Detalhamento'];
+  directory = [
+    { id: 'ana', name: 'Ana Ferreira', secondary: 'ana.ferreira@nexo.com', area: 'Planejamento Analytics' },
+    { id: 'rafael', name: 'Rafael Lima', secondary: 'rafael.lima@nexo.com', area: 'Engenharia de Dados' },
+    { id: 'camila', name: 'Camila Nunes', secondary: 'camila.nunes@nexo.com', area: 'Governança de Dados' },
+    { id: 'bruno', name: 'Bruno Costa', secondary: 'bruno.costa@nexo.com', area: 'Gestão de Pessoas' },
+  ];
+  // Minimal shared records for edit-mode prefill — mirrors admin-produtos-detalhe's catalog ids.
+  catalog = {
+    'claro-brasil': { name: 'Claro Brasil', description: 'Visão integrada de operação, receita e desempenho comercial.', category: 'Operacional', tags: ['Claro', 'Intraday'], estado: 'Ativo', contentType: 'Projeto Nexo', hasPublication: true, po: 'ana', tech: 'rafael', data: 'camila', routes: [{ name: 'Visão Geral', path: '/visao-geral' }, { name: 'Intraday', path: '/intraday' }], resources: [{ name: 'Documentação', path: '/docs/claro-brasil' }] },
+    'painel-de-clientes': { name: 'Painel de Clientes', description: 'Satisfação, churn e jornada dos principais contratos.', category: 'Clientes', tags: ['Churn', 'NPS'], estado: 'Ativo', contentType: 'Power BI', hasPublication: true, po: 'ana', tech: 'rafael', data: 'camila' },
+    'banco-de-horas': { name: 'Banco de Horas', description: 'Acompanhamento de saldo, utilizações e previsões da equipe.', category: 'Gestão', tags: ['RH', 'Equipe'], estado: 'Manutenção', contentType: 'Projeto Nexo', hasPublication: true, po: 'bruno', tech: 'rafael', data: null },
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  slugify(v) { return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  makeId() { return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'r-' + Date.now().toString(36) + Math.random().toString(36).slice(2); }
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  isEdit() { return this.query('mode') === 'edit'; }
+  editId() { return this.query('id') || ''; }
+
+  componentDidMount() {
+    this.measureNav();
+    if (this.navRef.current && typeof ResizeObserver !== 'undefined') {
+      this.ro = new ResizeObserver(this.measureNav);
+      this.ro.observe(this.navRef.current);
+    }
+    window.addEventListener('resize', this.measureNav);
+    if (!this.isEdit()) return;
+    const rec = this.catalog[this.editId()];
+    if (!rec) return;
+    this.setState({
+      name: rec.name, slug: this.editId(), description: rec.description,
+      category: rec.category, tags: rec.tags.slice(), estado: rec.estado, slugTouched: true,
+      contentType: rec.contentType || '', contentTypeLocked: !!rec.hasPublication,
+      po: this.directory.find((u) => u.id === rec.po) || null,
+      tech: this.directory.find((u) => u.id === rec.tech) || null,
+      data: this.directory.find((u) => u.id === rec.data) || null,
+      routes: (rec.routes || []).map((r) => ({ ...r, id: this.makeId() })),
+      resources: (rec.resources || []).map((r) => ({ ...r, id: this.makeId() })),
+      loaded: true,
+    });
+  }
+
+  componentWillUnmount() {
+    if (this.ro) this.ro.disconnect();
+    window.removeEventListener('resize', this.measureNav);
+  }
+
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  goDetail = (id, tab) => { window.location.href = '../admin-produtos-detalhe/AdminProdutoDetalhe.dc.html?id=' + encodeURIComponent(id) + (tab ? '&tab=' + encodeURIComponent(tab) : ''); };
+  goCancel = () => { this.isEdit() ? this.goDetail(this.editId(), 'geral') : this.goList(); };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  noop = () => {};
+
+  setName = (e) => this.setState((s) => ({ name: e.target.value, slug: s.slugTouched ? s.slug : this.slugify(e.target.value) }));
+  setSlug = (v) => this.setState({ slug: this.slugify(v), slugTouched: true });
+  setDescription = (e) => this.setState({ description: e.target.value });
+  setCategory = (v) => this.setState({ category: v });
+  setTags = (v) => this.setState({ tags: v });
+  setEstado = (v) => this.setState({ estado: v });
+  setContentType = (v) => {
+    if (this.isEdit() && this.state.contentTypeLocked && v !== this.state.contentType) {
+      const ok = window.confirm('Este produto já possui conteúdo publicado. Alterar o tipo de conteúdo exige uma nova configuração de publicação. Deseja continuar?');
+      if (!ok) return;
+    }
+    this.setState({ contentType: v, pbiLink: '', pbiHomePage: '' });
+  };
+  setPbiLink = (e) => this.setState({ pbiLink: e.target.value });
+  setPbiHomePage = (v) => this.setState({ pbiHomePage: v });
+  setDestaqueEnabled = (v) => this.setState({ destaqueEnabled: !!v });
+  setDestaqueOrder = (e) => this.setState({ destaqueOrder: e.target.value });
+  setDestaqueVigencia = (v) => this.setState({ destaqueVigencia: v });
+  setRoutes = (routes) => this.setState({ routes });
+  setResources = (resources) => this.setState({ resources });
+  setRoutesValid = (routesValid) => this.setState({ routesValid });
+  setResourcesValid = (resourcesValid) => this.setState({ resourcesValid });
+  togglePicker = (key) => this.setState((s) => ({ openPicker: s.openPicker === key ? null : key }));
+  pickOwner = (key, user) => this.setState({ [key]: user, openPicker: null });
+  clearOwner = (key) => this.setState({ [key]: null });
+
+  clearSaveError = () => this.setState({ saveError: null });
+
+  handleSave = () => {
+    if (this.state.saving) return;
+    if (!this.state.name.trim()) { this.setState({ saveError: 'Informe o nome do produto antes de salvar.' }); return; }
+    if (!this.state.contentType) { this.setState({ saveError: 'Selecione o tipo de conteúdo antes de salvar.' }); return; }
+    if (!this.state.routesValid || !this.state.resourcesValid) {
+      this.setState({ attemptedSave: true, saveError: 'Corrija as rotas/recursos inválidos ou duplicados antes de salvar.' });
+      return;
+    }
+    this.setState({ saving: true, saveError: null });
+    const id = this.isEdit() ? this.editId() : this.slugify(this.state.name);
+    try { sessionStorage.setItem('nexo:lastSavedProduct', this.state.name + (this.isEdit() ? ' atualizado' : ' salvo como Rascunho')); } catch (e) {}
+    window.setTimeout(() => { this.goDetail(id, 'geral'); }, 500);
+  };
+
+  ownerPicker(role, key) {
+    const ns = this.ns();
+    const s = this.state;
+    const selected = s[key];
+    const open = s.openPicker === key;
+    return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 260px', position: 'relative' } },
+      React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.03em' } }, role),
+      selected
+        ? React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+            React.createElement(ns.SelectOptionUser, { style: { width: '100%' }, state: 'selected', primary: selected.name, secondary: selected.area + ' · ' + selected.secondary, icon1: React.createElement('span') }),
+            React.createElement('span', { onClick: () => this.clearOwner(key), style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, color: 'var(--color-text-link)', cursor: 'pointer' } }, 'Alterar'))
+        : React.createElement('div', { onClick: () => this.togglePicker(key), style: {
+            width: '100%', minHeight: 40, borderRadius: 8, boxSizing: 'border-box', padding: '10px 12px', cursor: 'pointer',
+            boxShadow: 'inset 0 0 0 1px var(--color-border-default)', backgroundColor: 'var(--color-surface-card)',
+            fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center',
+          } }, 'Selecionar usuário do diretório'),
+      open && React.createElement('div', { style: {
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 10, maxHeight: 260, overflowY: 'auto',
+          backgroundColor: 'var(--color-surface-raised)', borderRadius: 10, boxShadow: 'var(--shadow-md, 0 6px 16px rgba(7,25,77,0.12))', padding: 4, display: 'flex', flexDirection: 'column', gap: 2,
+        } },
+        this.directory.map((u) => React.createElement('div', { key: u.id, onClick: () => this.pickOwner(key, u) },
+          React.createElement(ns.SelectOptionUser, { style: { width: '100%' }, state: 'default', primary: u.name, secondary: u.area + ' · ' + u.secondary, icon1: React.createElement('span') })))));
+  }
+
+  renderVals() {
+    const ns = this.ns();
+    const s = this.state;
+    const editMode = this.isEdit();
+
+    const identificacaoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 16, width: '100%' } },
+      React.createElement('div', { style: { display: 'flex', gap: 20, width: '100%', minWidth: 0, flexWrap: 'wrap' } },
+        React.createElement(ns.InputText, { style: { flex: '2 1 380px', minWidth: 0, width: '100%' }, label: 'Nome do produto', showLabel: true, showHelperText: false, required: true, value: s.name, onChange: this.setName, placeholder: 'Ex.: Painel de Clientes' }),
+        React.createElement(ns.FormSlugField, { style: { flex: '1 1 300px', minWidth: 0, width: '100%' }, prefix: '/produtos/', value: s.slug, onChange: this.setSlug, state: editMode ? 'readonly' : 'editable' })),
+      React.createElement(ns.InputTextarea, { style: { width: '100%' }, label: 'Descrição', state: s.description ? 'filled' : 'empty', value: s.description, onChange: this.setDescription, maxLength: 240 }),
+      React.createElement(ns.InputFileUpload, { style: { width: '100%' }, fileTitle: 'Logo do produto', supportingText: 'PNG ou SVG, fundo transparente, até 2MB.', state: 'empty' }));
+
+    const classificacaoSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 16, width: '100%' } },
+      React.createElement('div', { style: { display: 'flex', gap: 16, width: '100%', flexWrap: 'wrap', alignItems: 'flex-end' } },
+        React.createElement(ns.Field, { style: { flex: '1 1 260px' }, type: 'select', label: 'Categoria principal', options: this.categoryLabels, value: s.category || this.categoryLabels[0], onChange: this.setCategory }),
+        editMode
+          ? React.createElement(ns.Field, { style: { flex: '1 1 220px' }, type: 'select', label: 'Estado do ciclo de vida', options: this.estadoOptions, value: s.estado, onChange: this.setEstado })
+          : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+              React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-secondary)' } }, 'Estado inicial'),
+              React.createElement(ns.StatusBadge, { label: 'Rascunho', tone: 'neutral' }))),
+      React.createElement(ns.InputTagInput, { style: { width: '100%' }, label: 'Tags', tags: s.tags, onChange: this.setTags, placeholder: 'Adicionar tag e pressionar Enter' }),
+      React.createElement(ns.Field, { style: { width: '100%', maxWidth: 320 }, type: 'select', label: 'Tipo de conteúdo', required: true, options: this.contentTypeOptions, value: s.contentType || 'Selecionar tipo', onChange: this.setContentType }),
+      s.contentTypeLocked && React.createElement(ns.FeedbackAlert, { tone: 'warning', presentation: 'callout', showTitle: true, title: 'Este produto já possui conteúdo publicado.', description: 'Alterar o tipo de conteúdo exige uma nova configuração de publicação.', dismiss: false, style: { width: '100%' } }),
+      s.contentType === 'Power BI' && !editMode && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%', padding: '14px 16px', borderRadius: 10, boxSizing: 'border-box', boxShadow: 'inset 0 0 0 1px var(--color-border-subtle)' } },
+        React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' } }, 'Configuração Power BI (opcional agora)'),
+        React.createElement(ns.InputText, { label: 'Link do relatório no Power BI', showLabel: true, value: s.pbiLink, onChange: this.setPbiLink, placeholder: 'Cole o link corporativo do relatório', style: { width: '100%' } }),
+        s.pbiLink && React.createElement(ns.Field, { label: 'Página inicial', type: 'select', options: this.homePageOptions, value: s.pbiHomePage || this.homePageOptions[0], onChange: this.setPbiHomePage, style: { width: '100%', maxWidth: 300 } }),
+        React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-muted)' } }, 'Você pode deixar em branco e configurar depois em Admin > Publicações.')),
+      s.contentType === 'Projeto Nexo' && !editMode && React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-muted)' } }, 'O pacote executável é enviado na primeira publicação, em Admin > Publicações.'));
+
+    const responsaveisSlot = React.createElement('div', { style: { display: 'flex', gap: 20, width: '100%', flexWrap: 'wrap' } },
+      this.ownerPicker('Product Owner', 'po'), this.ownerPicker('Tech Owner', 'tech'), this.ownerPicker('Data Owner', 'data'));
+
+    const previewCard = React.createElement(ns.ProductCard, {
+      context: 'featured', name: s.name || 'Nome do produto', description: s.description || 'A descrição aparece aqui conforme preenchida em Identificação.',
+      productLogo: React.createElement(ns.BrandProductLogoTile, { fallback: (s.name || 'NX').slice(0, 2).toUpperCase(), size: 'md', shape: 'rounded', background: 'brand' }),
+      category: (s.category || 'operacional').toLowerCase(), categoryLabel: s.category || 'Categoria', showTags: true, tags: s.tags,
+      showCTA: true, cTA: React.createElement(ns.Button, { label: 'Abrir', size: 'compact', style2: 'secondary' }),
+      showAccess: false, showFavorite: false, style: { width: '100%', maxWidth: 320 },
+    });
+
+    const configuracaoSlot = React.createElement('div', { style: { display: 'flex', gap: 24, width: '100%', flexWrap: 'wrap', alignItems: 'flex-start' } },
+      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 16, flex: '1 1 280px' } },
+        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+          React.createElement(ns.Toggle, { checked: s.destaqueEnabled, onChange: this.setDestaqueEnabled }),
+          React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--color-text-primary)' } }, 'Habilitar destaque na home')),
+        s.destaqueEnabled && React.createElement(ns.InputText, { label: 'Ordem de exibição', showLabel: true, value: s.destaqueOrder, onChange: this.setDestaqueOrder, helperText: 'Menor número aparece primeiro.', showHelperText: true }),
+        s.destaqueEnabled && React.createElement(ns.DateRangePicker, { label: 'Vigência do destaque', value: s.destaqueVigencia, onChange: this.setDestaqueVigencia })),
+      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 320px' } },
+        React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.03em' } }, 'Pré-visualização'),
+        previewCard));
+
+    return {
+      pageTitle: editMode ? 'Editar produto' : 'Novo produto',
+      pageDescription: editMode ? 'Atualize os dados cadastrais do produto.' : 'Cadastre um novo produto para publicação no Nexo.',
+      saveLabel: editMode ? 'Salvar alterações' : 'Salvar produto',
+      primaryActionState: s.saving ? 'loading' : 'default',
+      secondaryActionState: s.saving ? 'disabled' : 'default',
+      navRef: this.navRef, navTopH: s.navTopH,
+      identificacaoSlot, classificacaoSlot, responsaveisSlot, configuracaoSlot,
+      routes: s.routes, setRoutes: this.setRoutes, setRoutesValid: this.setRoutesValid,
+      resources: s.resources, setResources: this.setResources, setResourcesValid: this.setResourcesValid,
+      attemptedSave: s.attemptedSave,
+      hasSaveError: !!s.saveError, saveError: s.saveError, clearSaveError: this.clearSaveError,
+      goCancel: this.goCancel, handleSave: this.handleSave, noop: this.noop,
+      crumbs: [
+        { label: 'Produtos', onClick: this.goList },
+        { label: editMode ? 'Editar produto' : 'Novo produto', current: true },
+      ],
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed: s.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: s.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        s.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), active: true, onClick: this.goList },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

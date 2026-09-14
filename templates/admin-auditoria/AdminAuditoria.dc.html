@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Auditoria" description="Rota /admin/auditoria — log consultivo de ações administrativas e eventos do Portal Nexo (Produtos, Publicações, Acessos, Comunicados, Sistema). KPIs por período, AdminFilterBar, DataTable com detalhe em drawer." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0" data-screen-label="Auditoria">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:16px;padding:24px 28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminPageHeader" title="Auditoria" description="Acompanhe ações administrativas e alterações realizadas no Nexo." breadcrumb="{{ false }}" status="{{ false }}" primaryAction="{{ false }}" secondaryAction="{{ false }}" overflow="{{ false }}" style="width:100%" hint-size="100%,64px"></x-import>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="{{ k.label }}" value="{{ k.value }}" secondary="{{ k.secondary }}" secondaryTone="{{ k.tone }}" style="width:100%;min-width:0" hint-size="100%,96px"></x-import>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:row;align-items:flex-start;gap:10px;flex-wrap:wrap;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" showSearch="{{ true }}" searchPlaceholder="Buscar por usuário, produto ou evento" searchValue="{{ filters.search }}" onSearchChange="{{ onSearchChange }}" showStatus="{{ true }}" statusLabel="Tipo de evento" statusOptions="{{ eventTypeOptions }}" statusValue="{{ filters.eventType }}" onStatusChange="{{ onEventTypeChange }}" showProduct="{{ true }}" productLabel="Produto" productOptions="{{ productOptions }}" productValue="{{ filters.product }}" onProductChange="{{ onProductChange }}" showPeriod="{{ true }}" periodLabel="Período" period="{{ filters.period }}" onPeriodChange="{{ onPeriodChange }}" activeFilters="{{ hasActiveFilters }}" activeFilterChips="{{ activeFilterChips }}" clearFilters="{{ hasActiveFilters }}" onClearFilters="{{ clearFilters }}" onMoreFilters="{{ toggleMoreFilters }}" style="flex:1 1 700px;min-width:360px" hint-size="700px,64px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Resultado" value="{{ filters.result }}" options="{{ resultOptions }}" onChange="{{ onResultChange }}" style="width:180px;flex-shrink:0" hint-size="180px,44px"></x-import>
+</div>
+
+<sc-if value="{{ isMoreFiltersOpen }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;background:var(--color-surface-card);border-radius:12px;padding:14px 16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Administrador" value="{{ filters.admin }}" options="{{ adminOptions }}" onChange="{{ onAdminChange }}" style="min-width:200px" hint-size="200px,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Área" value="{{ filters.area }}" options="{{ areaOptions }}" onChange="{{ onAreaChange }}" style="min-width:200px" hint-size="200px,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Tipo de conteúdo" value="{{ filters.contentType }}" options="{{ contentTypeOptions }}" onChange="{{ onContentTypeChange }}" style="min-width:200px" hint-size="200px,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" size="compact" onClick="{{ toggleMoreFilters }}" hint-size="90px,32px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ columns }}" rows="{{ pageRows }}" rowKey="{{ rowKey }}" onRowClick="{{ openDetail }}" hoverable="{{ true }}" density="standard" stickyHeader="{{ true }}" style="width:100%" hint-size="100%,420px"></x-import>
+</sc-if>
+<sc-if value="{{ !hasResults }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Nenhum evento encontrado para os filtros selecionados." text2="Ajuste o período ou os filtros aplicados." style="width:100%" hint-size="100%,220px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Limpar filtros" style2="secondary" onClick="{{ clearFilters }}" hint-size="130px,40px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationPagination" page="{{ page }}" totalPages="{{ totalPages }}" onPageChange="{{ setPage }}" style="align-self:center" hint-size="260px,36px"></x-import>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isDetailOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeDetail }}" style="position:fixed;inset:0;z-index:1000;display:flex;justify-content:flex-end;background:var(--color-surface-overlay)">
+<div onclick="{{ stopClick }}" style="width:480px;max-width:100%;height:100%;overflow-y:auto;background:var(--color-surface-raised);box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans)">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<h2 style="margin:0;font-size:17px;font-weight:700;color:var(--color-text-primary)">{{ detail.evento }}</h2>
+<span style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono)">{{ detail.eventId }}</span>
+</div>
+{{ detail.statusEl }}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Data e hora</div><div style="font-size:14px;color:var(--color-text-primary);font-family:var(--font-mono)">{{ detail.dataHora }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Área</div><div style="font-size:14px;color:var(--color-text-primary)">{{ detail.area }}</div></div>
+<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px">
+<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Ator</div>{{ detail.atorEl }}</div>
+</div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Objeto</div><div style="font-size:14px;color:var(--color-text-primary)">{{ detail.objeto }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Origem</div><div style="font-size:14px;color:var(--color-text-primary)">{{ detail.origem }}</div></div>
+</div>
+
+<sc-if value="{{ detail.hasFailureReason }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px;background:var(--color-state-negative-subtle);border-radius:10px;padding:12px 14px">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-negative)">Motivo da falha</span>
+<span style="font-size:13px;line-height:1.5;color:var(--color-text-primary)">{{ detail.failureReason }}</span>
+<sc-if value="{{ !showTechDetails }}" hint-placeholder-val="{{ true }}">
+<span onclick="{{ toggleTechDetails }}" style="font-size:12px;color:var(--color-text-link);cursor:pointer;align-self:flex-start">Ver detalhes técnicos</span>
+</sc-if>
+<sc-if value="{{ showTechDetails }}" hint-placeholder-val="{{ false }}">
+<pre style="margin:0;font-size:11px;font-family:var(--font-mono);color:var(--color-text-secondary);background:var(--color-surface-canvas);border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-word">{{ detail.technicalDetails }}</pre>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ detail.hasChanges }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;background:var(--color-surface-subtle);border-radius:10px;padding:14px 16px">
+<span style="font-size:13px;font-weight:700;color:var(--color-text-primary)">{{ detail.changeLabel }}</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Antes</span><span style="font-size:13px;color:var(--color-text-primary)">{{ detail.before }}</span></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Depois</span><span style="font-size:13px;color:var(--color-text-primary)">{{ detail.after }}</span></div>
+</div>
+</div>
+</sc-if>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" onClick="{{ closeDetail }}" style="align-self:flex-end" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AREAS = ['Produtos', 'Publicações', 'Acessos', 'Comunicados'];
+const PRODUCTS = ['Claro Brasil', 'Painel de Clientes', 'Banco de Horas', 'Governança de Dados', 'Portal Admin'];
+const ADMINS = ['Ana Ferreira', 'Rafael Lima', 'Bruno Costa', 'Camila Nunes', 'Sistema Nexo'];
+const CONTENT_TYPE_LABEL = { 'power-bi': 'Power BI', 'nexo-project': 'Projeto Nexo' };
+const RESULT_LABEL = { success: 'Sucesso', failure: 'Falha' };
+const RESULT_TONE = { Sucesso: 'positive', Falha: 'negative' };
+
+// Contrato estruturado por evento: cada eventType tem rótulo e área fixos —
+// nunca inferidos do texto do evento em tempo de exibição.
+const EVENT_TYPE_INFO = {
+  'product.created': { label: 'Produto criado', area: 'Produtos' },
+  'product.updated': { label: 'Produto alterado', area: 'Produtos' },
+  'product.archived': { label: 'Produto arquivado', area: 'Produtos' },
+  'product.owner_changed': { label: 'Responsável alterado', area: 'Produtos' },
+  'publication.first': { label: 'Primeira publicação', area: 'Publicações' },
+  'publication.updated': { label: 'Atualização', area: 'Publicações' },
+  'publication.failed': { label: 'Falha', area: 'Publicações' },
+  'publication.version_restored': { label: 'Versão restaurada', area: 'Publicações' },
+  'publication.powerbi_config_changed': { label: 'Configuração Power BI alterada', area: 'Publicações' },
+  'publication.homepage_changed': { label: 'Página inicial alterada', area: 'Publicações' },
+  'publication.report_replaced': { label: 'Relatório substituído', area: 'Publicações' },
+  'access.rule_created': { label: 'Regra criada', area: 'Acessos' },
+  'access.rule_updated': { label: 'Regra alterada', area: 'Acessos' },
+  'access.rule_disabled': { label: 'Regra desativada', area: 'Acessos' },
+  'access.exception_created': { label: 'Exceção criada', area: 'Acessos' },
+  'access.exception_revoked': { label: 'Exceção revogada', area: 'Acessos' },
+  'access.admin_added': { label: 'Administrador adicionado', area: 'Acessos' },
+  'access.profile_changed': { label: 'Perfil alterado', area: 'Acessos' },
+  'access.admin_removed': { label: 'Administrador removido', area: 'Acessos' },
+  'communique.created': { label: 'Criado', area: 'Comunicados' },
+  'communique.updated': { label: 'Editado', area: 'Comunicados' },
+  'communique.closed': { label: 'Encerrado', area: 'Comunicados' },
+};
+const EVENT_TYPES = Object.values(EVENT_TYPE_INFO).map((i) => i.label);
+
+// Contrato explícito por objeto — sem argumentos posicionais. `occurredAt` é
+// sempre um timestamp ISO 8601; formatação para exibição acontece à parte.
+function mkEvent({ id, occurredAt, actor, eventType, resourceType, resourceId, resourceName, product, contentType, result, metadata }) {
+  const info = EVENT_TYPE_INFO[eventType];
+  if (!info) throw new Error('Tipo de evento desconhecido: ' + eventType);
+  return {
+    id, eventId: 'EVT-' + id, occurredAt, actor,
+    eventType, eventLabel: info.label, area: info.area,
+    resourceType, resourceId, resourceName, product: product ?? null,
+    contentType: contentType ?? null,
+    result, resultLabel: RESULT_LABEL[result] || result,
+    metadata: metadata || {},
+    actorInitials: actor === 'Sistema Nexo' ? '⚙' : actor.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase(),
+  };
+}
+
+const EVENTS = [
+  mkEvent({ id: '20260826-01', occurredAt: '2026-08-26T18:42:00-03:00', actor: 'Ana Ferreira', eventType: 'publication.powerbi_config_changed', resourceType: 'publication', resourceId: 'pub-painel-clientes', resourceName: 'Painel de Clientes', product: 'Painel de Clientes', contentType: 'power-bi', result: 'success', metadata: { changeLabel: 'Página inicial Power BI', before: 'Resumo Executivo', after: 'Visão Geral', hasChanges: true } }),
+  mkEvent({ id: '20260826-02', occurredAt: '2026-08-26T17:10:00-03:00', actor: 'Ana Ferreira', eventType: 'publication.updated', resourceType: 'publication', resourceId: 'pub-claro-brasil', resourceName: 'Claro Brasil', product: 'Claro Brasil', contentType: 'nexo-project', result: 'success', metadata: { changeLabel: 'Versão do produto', before: 'v1.3.2', after: 'v1.4.0', hasChanges: true } }),
+  mkEvent({ id: '20260826-03', occurredAt: '2026-08-26T15:05:00-03:00', actor: 'Sistema Nexo', eventType: 'publication.failed', resourceType: 'publication', resourceId: 'pub-governanca-dados', resourceName: 'Governança de Dados', product: 'Governança de Dados', contentType: 'power-bi', result: 'failure', metadata: { hasFailureReason: true, failureReason: 'Não foi possível localizar o relatório Power BI.', technicalDetails: 'Error: PBI_REPORT_NOT_FOUND\n  reportId: 8f2a-11d3\n  workspace: gov-dados-prod\n  at PublishWorker.resolveReport (worker.ts:214)' } }),
+  mkEvent({ id: '20260825-01', occurredAt: '2026-08-25T11:20:00-03:00', actor: 'Rafael Lima', eventType: 'access.rule_updated', resourceType: 'access-rule', resourceId: 'rule-planejamento-claro', resourceName: 'Planejamento Claro', result: 'success' }),
+  mkEvent({ id: '20260825-02', occurredAt: '2026-08-25T11:32:00-03:00', actor: 'Rafael Lima', eventType: 'access.rule_updated', resourceType: 'access-rule', resourceId: 'rule-planejamento-claro', resourceName: 'Planejamento Claro', result: 'success', metadata: { changeLabel: 'Centros de Resultado', before: 'sem CR 31015', after: 'CR 31015 adicionado', hasChanges: true } }),
+  mkEvent({ id: '20260824-01', occurredAt: '2026-08-24T09:40:00-03:00', actor: 'Ana Ferreira', eventType: 'access.exception_created', resourceType: 'access-exception', resourceId: 'exc-camila-nunes', resourceName: 'Camila Nunes · Banco de Horas', product: 'Banco de Horas', result: 'success' }),
+  mkEvent({ id: '20260823-01', occurredAt: '2026-08-23T16:55:00-03:00', actor: 'Bruno Costa', eventType: 'communique.created', resourceType: 'communique', resourceId: 'com-manutencao-ago', resourceName: 'Manutenção programada — Painel de Clientes', product: 'Painel de Clientes', result: 'success' }),
+  mkEvent({ id: '20260822-01', occurredAt: '2026-08-22T14:12:00-03:00', actor: 'Ana Ferreira', eventType: 'access.profile_changed', resourceType: 'access-profile', resourceId: 'admin-camila-nunes', resourceName: 'Camila Nunes', result: 'success', metadata: { changeLabel: 'Perfil administrativo', before: 'Access Manager', after: 'Portal Admin', hasChanges: true } }),
+  mkEvent({ id: '20260821-01', occurredAt: '2026-08-21T13:30:00-03:00', actor: 'Ana Ferreira', eventType: 'publication.homepage_changed', resourceType: 'publication', resourceId: 'pub-claro-brasil', resourceName: 'Claro Brasil', product: 'Claro Brasil', contentType: 'power-bi', result: 'success', metadata: { changeLabel: 'Página inicial Power BI', before: 'Visão Mensal', after: 'Visão Diária', hasChanges: true } }),
+  mkEvent({ id: '20260820-01', occurredAt: '2026-08-20T09:18:00-03:00', actor: 'Bruno Costa', eventType: 'product.owner_changed', resourceType: 'product', resourceId: 'prod-banco-horas', resourceName: 'Banco de Horas', product: 'Banco de Horas', result: 'success', metadata: { changeLabel: 'Responsável do produto', before: 'Rafael Lima', after: 'Bruno Costa', hasChanges: true } }),
+  mkEvent({ id: '20260819-01', occurredAt: '2026-08-19T17:44:00-03:00', actor: 'Ana Ferreira', eventType: 'access.admin_added', resourceType: 'access-admin', resourceId: 'admin-camila-nunes', resourceName: 'Camila Nunes', result: 'success' }),
+  mkEvent({ id: '20260818-01', occurredAt: '2026-08-18T08:55:00-03:00', actor: 'Rafael Lima', eventType: 'access.exception_revoked', resourceType: 'access-exception', resourceId: 'exc-fernanda-souza', resourceName: 'Fernanda Souza · Claro Brasil', product: 'Claro Brasil', result: 'success' }),
+  mkEvent({ id: '20260817-01', occurredAt: '2026-08-17T12:00:00-03:00', actor: 'Sistema Nexo', eventType: 'publication.report_replaced', resourceType: 'publication', resourceId: 'pub-governanca-dados', resourceName: 'Governança de Dados', product: 'Governança de Dados', contentType: 'power-bi', result: 'success', metadata: { changeLabel: 'Relatório principal', before: 'Governança v3', after: 'Governança v4', hasChanges: true } }),
+  mkEvent({ id: '20260816-01', occurredAt: '2026-08-16T15:27:00-03:00', actor: 'Ana Ferreira', eventType: 'communique.closed', resourceType: 'communique', resourceId: 'com-janela-agosto', resourceName: 'Janela de manutenção — agosto', result: 'success' }),
+  mkEvent({ id: '20260815-01', occurredAt: '2026-08-15T10:10:00-03:00', actor: 'Bruno Costa', eventType: 'publication.first', resourceType: 'publication', resourceId: 'pub-portal-admin', resourceName: 'Portal Admin', product: 'Portal Admin', contentType: 'nexo-project', result: 'success' }),
+  mkEvent({ id: '20260814-01', occurredAt: '2026-08-14T09:02:00-03:00', actor: 'Rafael Lima', eventType: 'access.rule_created', resourceType: 'access-rule', resourceId: 'rule-governanca-cr-sul', resourceName: 'Governança CR Sul', result: 'success' }),
+  mkEvent({ id: '20260813-01', occurredAt: '2026-08-13T18:20:00-03:00', actor: 'Rafael Lima', eventType: 'access.rule_disabled', resourceType: 'access-rule', resourceId: 'rule-temp-cr', resourceName: 'Regra CR temporária', result: 'success' }),
+  mkEvent({ id: '20260812-01', occurredAt: '2026-08-12T11:47:00-03:00', actor: 'Ana Ferreira', eventType: 'publication.version_restored', resourceType: 'publication', resourceId: 'pub-claro-brasil', resourceName: 'Claro Brasil', product: 'Claro Brasil', contentType: 'nexo-project', result: 'success', metadata: { changeLabel: 'Versão do produto', before: 'v1.4.0', after: 'v1.3.2', hasChanges: true } }),
+  mkEvent({ id: '20260811-01', occurredAt: '2026-08-11T08:33:00-03:00', actor: 'Camila Nunes', eventType: 'product.updated', resourceType: 'product', resourceId: 'prod-painel-clientes', resourceName: 'Painel de Clientes', product: 'Painel de Clientes', contentType: 'power-bi', result: 'success', metadata: { changeLabel: 'Tipo de conteúdo', before: 'Projeto Nexo', after: 'Power BI', hasChanges: true } }),
+  mkEvent({ id: '20260810-01', occurredAt: '2026-08-10T14:58:00-03:00', actor: 'Bruno Costa', eventType: 'product.archived', resourceType: 'product', resourceId: 'prod-banco-horas-piloto', resourceName: 'Banco de Horas (piloto)', product: 'Banco de Horas', result: 'success' }),
+  mkEvent({ id: '20260809-01', occurredAt: '2026-08-09T09:11:00-03:00', actor: 'Rafael Lima', eventType: 'access.admin_removed', resourceType: 'access-admin', resourceId: 'admin-diego-prado', resourceName: 'Diego Prado', result: 'success' }),
+  mkEvent({ id: '20260806-01', occurredAt: '2026-08-06T10:15:00-03:00', actor: 'Bruno Costa', eventType: 'communique.updated', resourceType: 'communique', resourceId: 'com-manutencao-ago', resourceName: 'Manutenção programada — Painel de Clientes', product: 'Painel de Clientes', result: 'success' }),
+  mkEvent({ id: '20260805-01', occurredAt: '2026-08-05T13:50:00-03:00', actor: 'Camila Nunes', eventType: 'product.created', resourceType: 'product', resourceId: 'prod-automacao-financeira', resourceName: 'Automação Financeira', result: 'success' }),
+];
+
+function formatDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+}
+
+function getPeriodRange(period) {
+  const now = new Date();
+  let start;
+  let end = now;
+  switch (period.preset) {
+    case 'today': start = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+    case '24h': start = new Date(now.getTime() - 24 * 3600 * 1000); break;
+    case '7d': start = new Date(now.getTime() - 7 * 24 * 3600 * 1000); break;
+    case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1); break;
+    case 'custom':
+      start = period.start ? new Date(period.start + 'T00:00:00-03:00') : new Date(0);
+      end = period.end ? new Date(period.end + 'T23:59:59-03:00') : now;
+      break;
+    case '30d':
+    default: start = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
+  }
+  return { start, end };
+}
+
+function periodSecondaryLabel(period) {
+  if (period.preset === 'custom') return period.start && period.end ? formatDateTime(period.start + 'T00:00:00-03:00').slice(0, 10) + ' – ' + formatDateTime(period.end + 'T00:00:00-03:00').slice(0, 10) : 'Selecione um período';
+  return { today: 'Hoje', '24h': 'Últimas 24h', '7d': 'Últimos 7 dias', '30d': 'Últimos 30 dias', month: 'Mês atual' }[period.preset] || 'Período selecionado';
+}
+
+const PAGE_SIZE = 8;
+
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    filters: { search: '', eventType: [], product: [], result: [], period: { preset: '30d', start: '', end: '' }, admin: [], area: [], contentType: [] },
+    isMoreFiltersOpen: false,
+    page: 1,
+    detailId: null,
+    showTechDetails: false,
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goProducts = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  goAcessos = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; };
+  goPublicacoes = () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  stopClick = (e) => e.stopPropagation();
+
+  onSearchChange = (v) => this.setState((s) => ({ filters: { ...s.filters, search: v }, page: 1 }));
+  onEventTypeChange = (v) => this.setState((s) => ({ filters: { ...s.filters, eventType: v }, page: 1 }));
+  onProductChange = (v) => this.setState((s) => ({ filters: { ...s.filters, product: v }, page: 1 }));
+  onResultChange = (v) => this.setState((s) => ({ filters: { ...s.filters, result: v }, page: 1 }));
+  onPeriodChange = (v) => this.setState((s) => ({ filters: { ...s.filters, period: v }, page: 1 }));
+  onAdminChange = (v) => this.setState((s) => ({ filters: { ...s.filters, admin: v }, page: 1 }));
+  onAreaChange = (v) => this.setState((s) => ({ filters: { ...s.filters, area: v }, page: 1 }));
+  onContentTypeChange = (v) => this.setState((s) => ({ filters: { ...s.filters, contentType: v }, page: 1 }));
+  toggleMoreFilters = () => this.setState((s) => ({ isMoreFiltersOpen: !s.isMoreFiltersOpen }));
+  clearFilters = () => this.setState({ filters: { search: '', eventType: [], product: [], result: [], period: { preset: '30d', start: '', end: '' }, admin: [], area: [], contentType: [] }, page: 1 });
+  setPage = (p) => this.setState({ page: p });
+  openDetail = (row) => this.setState({ detailId: row.id, showTechDetails: false });
+  closeDetail = () => this.setState({ detailId: null, showTechDetails: false });
+  toggleTechDetails = () => this.setState((s) => ({ showTechDetails: !s.showTechDetails }));
+  rowKey = (r) => r.id;
+
+  // Filtro e ordenação usam sempre `occurredAt` (timestamp real) — nunca a
+  // string formatada para exibição.
+  filteredEvents() {
+    const f = this.state.filters;
+    const { start, end } = getPeriodRange(f.period);
+    const q = f.search.trim().toLowerCase();
+    return EVENTS.filter((e) => {
+      const t = new Date(e.occurredAt).getTime();
+      if (t < start.getTime() || t > end.getTime()) return false;
+      if (q && !(e.actor.toLowerCase().includes(q) || e.resourceName.toLowerCase().includes(q) || e.eventLabel.toLowerCase().includes(q))) return false;
+      if (f.eventType.length && !f.eventType.includes(e.eventLabel)) return false;
+      if (f.result.length && !f.result.includes(e.resultLabel)) return false;
+      if (f.area.length && !f.area.includes(e.area)) return false;
+      if (f.admin.length && !f.admin.includes(e.actor)) return false;
+      if (f.contentType.length) { const ctLabel = e.contentType && CONTENT_TYPE_LABEL[e.contentType]; if (!ctLabel || !f.contentType.includes(ctLabel)) return false; }
+      if (f.product.length && !f.product.includes(e.product)) return false;
+      return true;
+    }).sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt));
+  }
+
+  renderVals() {
+    const ns = this.ns();
+    const f = this.state.filters;
+    const filtered = this.filteredEvents();
+    const statusBadge = (label) => React.createElement(ns.StatusBadge, { label, tone: RESULT_TONE[label] || 'neutral' });
+    const avatarCell = (name, initials) => React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 } },
+      React.createElement(ns.IdentityAvatar, { content: 'initials', initials, size: 'sm' }),
+      React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, name));
+
+    const columns = [
+      { key: 'dataHora', header: 'Data e hora', mono: true, minWidth: 150, render: (r) => formatDateTime(r.occurredAt) },
+      { key: 'ator', header: 'Ator', render: (r) => avatarCell(r.actor, r.actorInitials), minWidth: 170 },
+      { key: 'evento', header: 'Evento', minWidth: 200, render: (r) => r.eventLabel },
+      { key: 'objeto', header: 'Objeto', minWidth: 190, maxWidth: 220, wrap: false, render: (r) => r.resourceName },
+      { key: 'area', header: 'Área', minWidth: 110 },
+      { key: 'resultado', header: 'Resultado', render: (r) => statusBadge(r.resultLabel), minWidth: 100 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (r) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Ver detalhes', onClick: () => this.openDetail(r) },
+      ] }) },
+    ];
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const page = Math.min(this.state.page, totalPages);
+    const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    const activeFilterChips = [
+      ...(f.search ? [{ label: 'Busca', value: f.search, onRemove: () => this.onSearchChange('') }] : []),
+      ...f.eventType.map((v) => ({ label: 'Evento', value: v, onRemove: () => this.onEventTypeChange(f.eventType.filter((x) => x !== v)) })),
+      ...f.product.map((v) => ({ label: 'Produto', value: v, onRemove: () => this.onProductChange(f.product.filter((x) => x !== v)) })),
+      ...f.result.map((v) => ({ label: 'Resultado', value: v, onRemove: () => this.onResultChange(f.result.filter((x) => x !== v)) })),
+      ...f.admin.map((v) => ({ label: 'Administrador', value: v, onRemove: () => this.onAdminChange(f.admin.filter((x) => x !== v)) })),
+      ...f.area.map((v) => ({ label: 'Área', value: v, onRemove: () => this.onAreaChange(f.area.filter((x) => x !== v)) })),
+      ...f.contentType.map((v) => ({ label: 'Tipo de conteúdo', value: v, onRemove: () => this.onContentTypeChange(f.contentType.filter((x) => x !== v)) })),
+    ];
+    const hasActiveFilters = activeFilterChips.length > 0;
+
+    const { start: periodStart, end: periodEnd } = getPeriodRange(f.period);
+    const periodEvents = EVENTS.filter((e) => { const t = new Date(e.occurredAt).getTime(); return t >= periodStart.getTime() && t <= periodEnd.getTime(); });
+    const adminChangeEvents = periodEvents.filter((e) => e.area === 'Acessos');
+    const failureEvents = periodEvents.filter((e) => e.result === 'failure');
+    const activeAdmins = new Set(EVENTS.filter((e) => e.actor !== 'Sistema Nexo').map((e) => e.actor));
+
+    const detailId = this.state.detailId;
+    let detail = {};
+    if (detailId) {
+      const e = EVENTS.find((x) => x.id === detailId) || {};
+      const m = e.metadata || {};
+      detail = {
+        eventId: e.eventId, evento: e.eventLabel, dataHora: formatDateTime(e.occurredAt), area: e.area, objeto: e.resourceName, origem: m.origem || 'Console administrativo',
+        statusEl: statusBadge(e.resultLabel),
+        atorEl: avatarCell(e.actor, e.actorInitials),
+        hasFailureReason: e.result === 'failure' && !!m.hasFailureReason,
+        failureReason: m.failureReason, technicalDetails: m.technicalDetails,
+        hasChanges: !!m.hasChanges, changeLabel: m.changeLabel, before: m.before, after: m.after,
+      };
+    }
+
+    return {
+      kpis: [
+        { label: 'Eventos no período', value: String(periodEvents.length), secondary: periodSecondaryLabel(f.period), tone: 'neutral' },
+        { label: 'Alterações administrativas', value: String(adminChangeEvents.length), secondary: 'Acessos e perfis', tone: 'info' },
+        { label: 'Falhas registradas', value: String(failureEvents.length), secondary: failureEvents.length ? 'Requer atenção' : 'Nenhuma no período', tone: failureEvents.length ? 'negative' : 'positive' },
+        { label: 'Administradores ativos', value: String(activeAdmins.size), secondary: 'Com ações no log', tone: 'neutral' },
+      ],
+      filters: f,
+      eventTypeOptions: EVENT_TYPES, productOptions: PRODUCTS, resultOptions: ['Sucesso', 'Falha', 'Parcial'],
+      adminOptions: ADMINS, areaOptions: AREAS, contentTypeOptions: ['Power BI', 'Projeto Nexo'],
+      onSearchChange: this.onSearchChange, onEventTypeChange: this.onEventTypeChange, onProductChange: this.onProductChange,
+      onResultChange: this.onResultChange, onPeriodChange: this.onPeriodChange, onAdminChange: this.onAdminChange,
+      onAreaChange: this.onAreaChange, onContentTypeChange: this.onContentTypeChange,
+      isMoreFiltersOpen: this.state.isMoreFiltersOpen, toggleMoreFilters: this.toggleMoreFilters,
+      activeFilterChips, hasActiveFilters, clearFilters: this.clearFilters,
+
+      columns, pageRows, rowKey: this.rowKey, openDetail: this.openDetail,
+      hasResults: filtered.length > 0,
+      page, totalPages, setPage: this.setPage,
+
+      isDetailOpen: !!detailId, detail, closeDetail: this.closeDetail, stopClick: this.stopClick,
+      showTechDetails: this.state.showTechDetails, toggleTechDetails: this.toggleTechDetails,
+
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      noop: this.noop,
+      sidebarCollapsed: this.state.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: this.state.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        this.state.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: this.goProducts },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: this.goAcessos },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: this.goPublicacoes },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), active: true },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity') },
+        { label: 'Saúde', icon: this.icon('IconDataState') },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

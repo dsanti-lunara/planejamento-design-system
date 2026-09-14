@@ -1,0 +1,27 @@
+<!-- @dsCard group="Components" viewport="700x460" name="Forms & Inputs" subtitle="Field, text/password/time inputs, checkbox, toggle, tag input" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--color-surface-page)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Field, InputText, InputPassword, InputTime, InputCheckbox, InputTextarea, InputTagInput, InputMultiSelect, InputFileUpload, Toggle, SegmentedControl, FormSlugField, DateRangePicker } = window.DesignSystem_25dd5c;
+function Row({children}){ return <div style={{display:'flex',gap:10,alignItems:'flex-start',flexWrap:'wrap'}}>{children}</div>; }
+function DateRangePickerDemo(){
+  const [value, setValue] = React.useState({ preset: '24h', start: '', end: '' });
+  return <DateRangePicker value={value} onChange={setValue} />;
+}
+function App(){
+  return <>
+    <Row><Field type="select" state="default"/><Field type="date" state="filled"/><Field type="search" state="focus"/></Row>
+    <Row><DateRangePickerDemo/></Row>
+    <Row><InputText label="Nome do relatório" state="default"/><InputText label="Nome do relatório" state="error" helperText="Campo obrigatório" showHelperText/><InputText label="Desabilitado" state="disabled"/></Row>
+    <Row><InputPassword size="default" state="default"/><InputTime state="default"/></Row>
+    <Row><InputCheckbox state="unchecked"/><InputCheckbox state="checked"/><Toggle state="off"/><Toggle state="on"/></Row>
+    <Row><InputTagInput state="default"/><InputMultiSelect state="default"/></Row>
+    <Row><SegmentedControl active="0"/></Row>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

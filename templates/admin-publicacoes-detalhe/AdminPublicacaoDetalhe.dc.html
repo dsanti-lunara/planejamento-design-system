@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Detalhe da publicação" description="Rota /admin/publicacoes/:key — header simplificado, Resumo, Timeline, Validações e Logs técnicos (recolhidos). Sem ambientes/aprovação. Publicar atualização e Restaurar versão anterior (Projeto Nexo)." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="300px,24px"></x-import>
+
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;width:100%;background:var(--color-surface-card);border-radius:16px;padding:20px 24px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h1 style="margin:0;font-family:var(--font-sans);font-size:20px;font-weight:700;color:var(--color-text-primary)">{{ pub.product }} · {{ pub.reference }}</h1>
+{{ statusBadgeEl }}
+</div>
+<span style="font-family:var(--font-sans);font-size:13px;color:var(--color-text-secondary)">Publicado por {{ pub.publishedBy }} · Atualizado em {{ pub.updatedAt }}</span>
+</div>
+<div style="display:flex;gap:8px;flex-shrink:0">
+<sc-if value="{{ canRestore }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Restaurar versão anterior" style2="secondary" onClick="{{ openRestoreConfirm }}" hint-size="190px,40px"></x-import>
+</sc-if>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Publicar atualização" style2="primary" onClick="{{ handlePublishUpdate }}" hint-size="170px,40px"></x-import>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;width:100%;background:var(--color-surface-card);border-radius:14px;padding:16px 20px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Resumo</h2>
+{{ summaryEl }}
+
+<h2 style="margin:16px 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Timeline</h2>
+<ol style="display:flex;flex-direction:column;width:100%;margin:0;padding:0;list-style:none">
+<sc-for list="{{ timeline }}" as="t" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DeploymentTimelineItem" title="{{ t.title }}" state="{{ t.state }}" connector="{{ t.connector }}" timestamp="{{ t.timestamp }}" description="{{ t.description }}" progressCTA="{{ false }}" hint-size="100%,72px"></x-import>
+</sc-for>
+</ol>
+
+<h2 style="margin:16px 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Validações</h2>
+<ul role="list" style="display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;width:100%">
+<sc-for list="{{ validations }}" as="v" hint-placeholder-count="4">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DeploymentValidationItem" name="{{ v.name }}" state="{{ v.state }}" description="{{ v.description }}" hint-size="100%,56px"></x-import>
+</sc-for>
+</ul>
+
+<div style="margin-top:16px">
+<div onclick="{{ toggleLogs }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+<span style="font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">{{ logsToggleLabel }}</span>
+<span style="font-family:var(--font-sans);font-size:12px;color:var(--color-text-muted)">{{ logsToggleIcon }}</span>
+</div>
+<sc-if value="{{ logsOpen }}" hint-placeholder-val="{{ false }}">
+<div role="table" aria-label="Detalhes técnicos" style="display:flex;flex-direction:column;gap:6px;width:100%;font-family:var(--font-mono);margin-top:10px">
+<sc-for list="{{ logs }}" as="l" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DeploymentLogRow" timestamp="{{ l.timestamp }}" state="{{ l.state }}" origin="{{ l.origin }}" message="{{ l.message }}" hint-size="100%,32px"></x-import>
+</sc-for>
+</div>
+</sc-if>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isRestoreConfirmOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeRestoreConfirm }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:460px;max-width:100%;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Restaurar versão anterior?</h2>
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--color-text-secondary)">A versão atual {{ pub.reference }} será substituída pela versão {{ pub.previousReference }}. Esta ação será registrada na Auditoria.</p>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeRestoreConfirm }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ restoreConfirmLabel }}" style2="destructive" onClick="{{ confirmRestore }}" hint-size="160px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPbiEditOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closePbiEdit }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:480px;max-width:100%;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Configuração Power BI</h2>
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--color-text-secondary)">Altere o link do relatório ou a página inicial. Se o Report ID permanecer o mesmo, o conteúdo atualizado no Power BI continuará sendo exibido automaticamente.</p>
+{{ pbiEditSlot }}
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closePbiEdit }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Salvar" style2="primary" onClick="{{ savePbiEdit }}" hint-size="100px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PUBLICATIONS = {
+  'claro-brasil': { product: 'Claro Brasil', type: 'Projeto Nexo', reference: 'v1.4.0', previousReference: 'v1.3.2', status: 'Publicado', publishedBy: 'Ana Ferreira', updatedAt: '26/08/2026 09:20', createdAt: '26/08/2026 08:40',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '08:40', description: 'Pacote claro-brasil-1.4.0.zip enviado por Ana Ferreira.' },
+      { title: 'Validação concluída', state: 'completed', timestamp: '08:52', description: 'Manifesto, estrutura e rotas validados com sucesso.' },
+      { title: 'Publicado', state: 'completed', timestamp: '09:20', description: 'v1.4.0 disponibilizada no Nexo por Ana Ferreira.' },
+    ],
+    validations: [
+      { name: 'Manifesto válido', state: 'success', description: 'Lido sem erros.' },
+      { name: 'Estrutura do pacote válida', state: 'success', description: 'Arquivos obrigatórios encontrados.' },
+      { name: 'Versão identificada', state: 'success', description: 'v1.4.0 identificada no manifesto.' },
+      { name: 'Rotas válidas', state: 'success', description: 'Rotas do produto verificadas.' },
+    ],
+    logs: [
+      { timestamp: '09:18:02', state: 'info', origin: 'publish', message: 'Pacote extraído com sucesso.' },
+      { timestamp: '09:19:10', state: 'success', origin: 'build', message: 'Build concluído em 38s.' },
+      { timestamp: '09:20:05', state: 'success', origin: 'publish', message: 'Publicação concluída no Nexo.' },
+    ],
+  },
+  'banco-horas': { product: 'Banco de Horas', type: 'Projeto Nexo', reference: 'v1.0.3', previousReference: 'v1.0.2', status: 'Publicando', publishedBy: 'Bruno Costa', updatedAt: '25/08/2026 17:40', createdAt: '25/08/2026 17:35',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '17:35', description: 'Pacote banco-horas-1.0.3.zip enviado por Bruno Costa.' },
+      { title: 'Validação concluída', state: 'completed', timestamp: '17:37', description: 'Manifesto, estrutura e rotas validados com sucesso.' },
+      { title: 'Publicando', state: 'current', timestamp: '17:40', description: 'Disponibilizando v1.0.3 no Nexo.' },
+    ],
+    validations: [
+      { name: 'Manifesto válido', state: 'success', description: 'Lido sem erros.' },
+      { name: 'Estrutura do pacote válida', state: 'success', description: 'Arquivos obrigatórios encontrados.' },
+      { name: 'Versão identificada', state: 'success', description: 'v1.0.3 identificada no manifesto.' },
+      { name: 'Rotas válidas', state: 'running', description: 'Verificando rotas do produto...' },
+    ],
+    logs: [
+      { timestamp: '17:38:00', state: 'info', origin: 'publish', message: 'Pacote extraído com sucesso.' },
+      { timestamp: '17:39:12', state: 'success', origin: 'build', message: 'Build concluído em 35s.' },
+    ],
+  },
+  'governanca-dados': { product: 'Governança de Dados', type: 'Projeto Nexo', reference: 'v3.0.0', previousReference: 'v2.4.1', status: 'Falha', publishedBy: 'Camila Nunes', updatedAt: '25/08/2026 14:12', createdAt: '25/08/2026 13:40',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '13:40', description: 'Pacote governanca-dados-3.0.0.zip enviado por Camila Nunes.' },
+      { title: 'Validação concluída', state: 'completed', timestamp: '13:50', description: 'Manifesto e versão validados.' },
+      { title: 'Falha na publicação', state: 'failed', timestamp: '14:12', description: 'Erro ao processar a estrutura do pacote.' },
+    ],
+    validations: [
+      { name: 'Manifesto válido', state: 'success', description: 'Lido sem erros.' },
+      { name: 'Estrutura do pacote válida', state: 'error', description: 'Diretório de rotas ausente.' },
+      { name: 'Versão identificada', state: 'success', description: 'v3.0.0 identificada no manifesto.' },
+      { name: 'Rotas válidas', state: 'pending', description: 'Bloqueado pela falha de estrutura.' },
+    ],
+    logs: [
+      { timestamp: '14:10:02', state: 'info', origin: 'publish', message: 'Pacote extraído com sucesso.' },
+      { timestamp: '14:11:15', state: 'success', origin: 'build', message: 'Build concluído em 44s.' },
+      { timestamp: '14:12:30', state: 'error', origin: 'validate', message: 'Diretório de rotas ausente no pacote.' },
+    ],
+  },
+  'loja-digital': { product: 'Loja Digital', type: 'Projeto Nexo', reference: 'v2.0.1', previousReference: 'v2.1.0', status: 'Restaurado', publishedBy: 'Ana Ferreira', updatedAt: '22/08/2026 11:00', createdAt: '20/08/2026 10:00',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '20/08 10:00', description: 'Pacote loja-digital-2.1.0.zip enviado.' },
+      { title: 'Publicado', state: 'completed', timestamp: '20/08 10:20', description: 'v2.1.0 disponibilizada no Nexo.' },
+      { title: 'Versão anterior restaurada', state: 'completed', timestamp: '22/08 11:00', description: 'v2.0.1 restaurada por Ana Ferreira.' },
+    ],
+    validations: [
+      { name: 'Manifesto válido', state: 'success', description: 'Lido sem erros.' },
+      { name: 'Estrutura do pacote válida', state: 'success', description: 'Arquivos obrigatórios encontrados.' },
+      { name: 'Versão identificada', state: 'success', description: 'v2.0.1 identificada no manifesto.' },
+      { name: 'Rotas válidas', state: 'success', description: 'Rotas do produto verificadas.' },
+    ],
+    logs: [
+      { timestamp: '11:00:04', state: 'info', origin: 'restore', message: 'Restauração para v2.0.1 iniciada.' },
+      { timestamp: '11:00:22', state: 'success', origin: 'restore', message: 'Versão anterior restaurada com sucesso.' },
+    ],
+  },
+  'painel-clientes': { product: 'Painel de Clientes', type: 'Power BI', reference: 'Painel de Clientes', status: 'Publicado', publishedBy: 'Rafael Lima', updatedAt: '24/08/2026 14:10', createdAt: '10/08/2026 09:00',
+    reportName: 'Painel de Clientes', workspace: 'Planejamento Analytics', homePage: 'Visão Geral', link: 'https://app.powerbi.com/groups/xxx/reports/painel-clientes',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '09:00', description: 'Link do relatório configurado por Rafael Lima.' },
+      { title: 'Validação concluída', state: 'completed', timestamp: '09:05', description: 'Relatório, acesso e página inicial validados.' },
+      { title: 'Publicado', state: 'completed', timestamp: '09:10', description: 'Painel de Clientes disponibilizado no Nexo.' },
+    ],
+    validations: [
+      { name: 'Relatório encontrado', state: 'success', description: 'Painel de Clientes localizado.' },
+      { name: 'Acesso autorizado', state: 'success', description: 'Nexo autorizado a acessar o relatório.' },
+      { name: 'Configuração de incorporação válida', state: 'success', description: 'Embed validado.' },
+      { name: 'Página inicial encontrada', state: 'success', description: 'Visão Geral' },
+    ],
+    logs: [
+      { timestamp: '09:04:10', state: 'info', origin: 'publish', message: 'Link do relatório interpretado.' },
+      { timestamp: '09:10:00', state: 'success', origin: 'publish', message: 'Publicação concluída no Nexo.' },
+    ],
+  },
+  'painel-financeiro': { product: 'Painel Financeiro', type: 'Power BI', reference: 'Painel Financeiro', status: 'Validando', publishedBy: 'Diego Prado', updatedAt: '26/08/2026 07:15', createdAt: '26/08/2026 07:10',
+    reportName: 'Painel Financeiro', workspace: 'Planejamento Analytics', homePage: 'Resumo Mensal', link: 'https://app.powerbi.com/groups/xxx/reports/painel-financeiro',
+    timeline: [
+      { title: 'Publicação criada', state: 'completed', timestamp: '07:10', description: 'Link do relatório configurado por Diego Prado.' },
+      { title: 'Validando', state: 'current', timestamp: '07:15', description: 'Verificando acesso e configuração de incorporação.' },
+    ],
+    validations: [
+      { name: 'Relatório encontrado', state: 'success', description: 'Painel Financeiro localizado.' },
+      { name: 'Acesso autorizado', state: 'running', description: 'Verificando permissão de incorporação...' },
+      { name: 'Configuração de incorporação válida', state: 'pending', description: 'Aguardando validação de acesso.' },
+      { name: 'Página inicial encontrada', state: 'pending', description: 'Aguardando validação de acesso.' },
+    ],
+    logs: [
+      { timestamp: '07:10:20', state: 'info', origin: 'publish', message: 'Link do relatório interpretado.' },
+    ],
+  },
+};
+const STATUS_TONE = { 'Publicado': 'positive', 'Publicando': 'info', 'Validando': 'info', 'Falha': 'negative', 'Restaurado': 'neutral' };
+
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, restoreConfirmOpen: false, restored: false, pbiEditOpen: false, pbiLink: '', pbiHomePage: '' };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  stopClick = (e) => e.stopPropagation();
+  toggleLogs = () => this.setState((s) => ({ logsOpen: !s.logsOpen }));
+
+  getKey() { return this.query('key') || 'claro-brasil'; }
+  getPub() { return PUBLICATIONS[this.getKey()] || PUBLICATIONS['claro-brasil']; }
+
+  handlePublishUpdate = () => {
+    const pub = this.getPub();
+    if (pub.type === 'Projeto Nexo') { window.location.href = '../admin-publicacoes-nova/AdminPublicacaoNova.dc.html?mode=atualizacao&key=' + this.getKey(); return; }
+    this.setState({ pbiEditOpen: true, pbiLink: pub.link, pbiHomePage: pub.homePage });
+  };
+  closePbiEdit = () => this.setState({ pbiEditOpen: false });
+  savePbiEdit = () => this.setState({ pbiEditOpen: false });
+  setPbiLink = (e) => this.setState({ pbiLink: e.target.value });
+  setPbiHomePage = (v) => this.setState({ pbiHomePage: v });
+
+  openRestoreConfirm = () => this.setState({ restoreConfirmOpen: true });
+  closeRestoreConfirm = () => this.setState({ restoreConfirmOpen: false });
+  confirmRestore = () => {
+    const p = this.getPub();
+    this.setState({
+      restoreConfirmOpen: false, restored: true,
+      extraTimeline: { title: 'Versão anterior restaurada', state: 'completed', timestamp: '26/08/2026', description: p.reference + ' restaurada — registrado na Auditoria por Ana Ferreira.' },
+    });
+  };
+
+  renderVals() {
+    const ns = this.ns();
+    const s = this.state;
+    const p = this.getPub();
+    const isPacote = p.type === 'Projeto Nexo';
+    const restored = s.restored;
+    const effectiveReference = restored ? p.previousReference : p.reference;
+    const effectiveStatus = restored ? 'Restaurado' : p.status;
+    const canRestore = isPacote && !!p.previousReference && (p.status === 'Publicado') && !restored;
+
+    const timeline = p.timeline.map((t, i, arr) => ({ ...t, connector: i < arr.length - 1 || !!s.extraTimeline })).concat(s.extraTimeline ? [{ ...s.extraTimeline, connector: false }] : []);
+
+    const summaryEl = isPacote
+      ? React.createElement(React.Fragment, null,
+          React.createElement(ns.DataKeyValueList, { label: 'Produto', value: p.product, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Tipo', value: 'Projeto Nexo', orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Versão atual', value: effectiveReference, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Versão anterior', value: restored ? p.reference : (p.previousReference || 'Nenhuma'), orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Publicado por', value: p.publishedBy, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Publicado em', value: p.updatedAt, orientation: 'horizontal' }))
+      : React.createElement(React.Fragment, null,
+          React.createElement(ns.DataKeyValueList, { label: 'Produto', value: p.product, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Tipo', value: 'Power BI', orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Relatório', value: p.reportName, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Workspace', value: p.workspace, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Página inicial', value: p.homePage, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Publicado por', value: p.publishedBy, orientation: 'horizontal' }),
+          React.createElement(ns.DataKeyValueList, { label: 'Publicado em', value: p.updatedAt, orientation: 'horizontal' }));
+
+    const pbiEditSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' } },
+      React.createElement(ns.InputText, { label: 'Link do relatório no Power BI', showLabel: true, value: s.pbiLink, onChange: this.setPbiLink, style: { width: '100%' } }),
+      React.createElement(ns.Field, { label: 'Página inicial', type: 'select', text3: s.pbiHomePage, options: ['Visão Geral', 'Resumo Mensal', 'Indicadores', 'Detalhamento'], onChange: this.setPbiHomePage, style: { width: '100%', maxWidth: 320 } }));
+
+    return {
+      pub: { ...p, reference: effectiveReference, status: effectiveStatus },
+      statusBadgeEl: React.createElement(ns.StatusBadge, { label: effectiveStatus, tone: STATUS_TONE[effectiveStatus] || 'neutral' }),
+      canRestore, openRestoreConfirm: this.openRestoreConfirm, closeRestoreConfirm: this.closeRestoreConfirm, confirmRestore: this.confirmRestore, stopClick: this.stopClick,
+      isRestoreConfirmOpen: s.restoreConfirmOpen, restoreConfirmLabel: 'Restaurar ' + (p.previousReference || ''),
+      handlePublishUpdate: this.handlePublishUpdate,
+      isPbiEditOpen: s.pbiEditOpen, closePbiEdit: this.closePbiEdit, savePbiEdit: this.savePbiEdit, pbiEditSlot,
+
+      summaryEl,
+      timeline,
+      validations: p.validations,
+      logs: p.logs,
+      logsOpen: !!s.logsOpen || p.status === 'Falha',
+      toggleLogs: this.toggleLogs,
+      logsToggleLabel: 'Detalhes técnicos',
+      logsToggleIcon: (s.logsOpen || p.status === 'Falha') ? '▾ ocultar' : '▸ exibir',
+
+      crumbs: [
+        { label: 'Publicações', onClick: this.goList },
+        { label: p.product, current: true },
+      ],
+      noop: this.noop,
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed: s.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: s.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        s.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; } },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), active: true, onClick: this.goList },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

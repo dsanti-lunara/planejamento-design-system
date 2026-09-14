@@ -1,0 +1,112 @@
+<!-- @dsCard group="Components" viewport="1400x1560" name="Data Visualization" subtitle="Bar, area, donut, gauge, heatmap, sparkline, waterfall charts, data table" -->
+<link rel="stylesheet" href="../../styles.css">
+<div id="r" style="padding:20px;display:flex;flex-direction:column;gap:20px;background:var(--color-surface-canvas)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { ChartBar, ChartArea, ChartDonut, ChartGauge, ChartHeatmap, ChartSparkline, ChartWaterfall, DataTable, AnalyticalDataTable, HealthStatusCard, ChartDetailCard } = window.DesignSystem_25dd5c;
+function Panel({ title, children, width }) {
+  return <div style={{ width, background:'var(--color-surface-card)', border:'1px solid var(--color-border-default)', borderRadius:12, boxShadow:'var(--shadow-card)', padding:16 }}>
+    <div style={{ fontFamily:'Inter,sans-serif', fontWeight:600, fontSize:12, color:'var(--color-text-secondary)', marginBottom:10, textTransform:'uppercase', letterSpacing:'0.04em' }}>{title}</div>
+    {children}
+  </div>;
+}
+function Row({ children }) { return <div style={{ display:'flex', gap:16, alignItems:'flex-start', flexWrap:'wrap' }}>{children}</div>; }
+
+const cats = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const barSeries = [{ name:'Realizado', tone:'info', data:[82,91,78,95,88,60,45] }];
+const areaSeries = [
+  { name:'Plano', tone:'neutral', dashed:true, fill:false, data:[70,72,74,76,78,80,82] },
+  { name:'Real', tone:'info', data:[68,75,71,80,85,79,90] },
+];
+const donutData = [
+  { label:'Atendido', value:64, tone:'success' },
+  { label:'Em fila', value:22, tone:'warning' },
+  { label:'Abandonado', value:14, tone:'critical' },
+];
+const waterfallItems = [
+  { label:'NS Forecast', value:82.4, isTotal:true },
+  { label:'Absenteísmo', value:-3.1 },
+  { label:'Pico de volume', value:-2.4 },
+  { label:'Ação de escala', value:4.8 },
+  { label:'NS Real', value:81.7, isTotal:true },
+];
+const heatRows = ['Seg','Ter','Qua','Qui','Sex'];
+const heatCols = ['08h','10h','12h','14h','16h','18h'];
+const heatData = heatRows.map(() => heatCols.map(() => Math.round(Math.random()*100)));
+const tableColumns = [
+  { key:'fila', header:'Fila', pin:'left', width:140 },
+  { key:'ns', header:'NS', numeric:true, unit:'%' },
+  { key:'volume', header:'Volume', numeric:true },
+  { key:'status', header:'Status' },
+];
+const tableRows = [
+  { fila:'Suporte N1', ns:'91,2', volume:'1.204', status:'Homologado' },
+  { fila:'Retenção', ns:'78,4', volume:'842', status:'Atenção' },
+  { fila:'Financeiro', ns:'95,0', volume:'318', status:'Homologado' },
+];
+
+const analyticalGroups = [
+  { key:'recebidas', title:'Recebidas', measures:[
+    { key:'rec_real', label:'Realizado' }, { key:'rec_plano', label:'Plano', deviation:false },
+    { key:'rec_dev', label:'Desvio (Abs)', deviation:true }, { key:'rec_devp', label:'Desvio (%)', deviation:true },
+  ] },
+  { key:'atendidas', title:'Atendidas', measures:[
+    { key:'atd_real', label:'Realizado' }, { key:'atd_plano', label:'Plano', deviation:false },
+    { key:'atd_dev', label:'Desvio (Abs)', deviation:true }, { key:'atd_devp', label:'Desvio (%)', deviation:true },
+  ] },
+  { key:'ns60', title:'NS60', measures:[
+    { key:'ns_real', label:'Realizado', unit:'%' }, { key:'ns_plano', label:'Plano', unit:'%', deviation:false },
+    { key:'ns_dev', label:'Desvio (p.p.)', deviation:true },
+  ] },
+];
+const analyticalRows = [
+  { key:'pos', dimensao:'Claro Móvel, Pós N1', rec_real:'29.410', rec_plano:'30.120', rec_dev:'-710', rec_devp:'-2,4%', atd_real:'28.980', atd_plano:'29.100', atd_dev:'-120', atd_devp:'-0,4%', ns_real:'95,1%', ns_plano:'94,0%', ns_dev:'+1,1 p.p.' },
+  { key:'pre', dimensao:'Claro Móvel, Pré N1', rec_real:'42.870', rec_plano:'41.600', rec_dev:'+1.270', rec_devp:'+3,1%', atd_real:'39.740', atd_plano:'39.900', atd_dev:'-160', atd_devp:'-0,4%', ns_real:'92,8%', ns_plano:'94,0%', ns_dev:'-1,2 p.p.' },
+  { key:'total', dimensao:'Total', total:true, rec_real:'110.122', rec_plano:'107.032', rec_dev:'+3.090', rec_devp:'+2,9%', atd_real:'104.032', atd_plano:'102.108', atd_dev:'+1.924', atd_devp:'+1,9%', ns_real:'93,8%', ns_plano:'94,0%', ns_dev:'-0,2 p.p.' },
+];
+analyticalGroups.unshift({ key:'dimensao', title:'', measures:[{ key:'dimensao', label:'Operação' }] });
+
+function App(){
+  return <>
+    <Row>
+      <Panel title="ChartBar" width={420}><ChartBar categories={cats} series={barSeries} height={180} tooltip legend /></Panel>
+      <Panel title="ChartArea" width={420}><ChartArea categories={cats} series={areaSeries} height={180} legend /></Panel>
+      <Panel title="ChartDonut" width={300}><ChartDonut data={donutData} legend centerLabel="Total" centerValue="1.240" /></Panel>
+    </Row>
+    <Row>
+      <Panel title="ChartGauge" width={200}><ChartGauge value={78} auto label="SLA do dia" /></Panel>
+      <Panel title="ChartGauge (arc)" width={220}><ChartGauge shape="arc" value={62} auto valueLabel="Médio" label="Risco operacional" /></Panel>
+      <Panel title="ChartSparkline" width={220}><ChartSparkline data={[40,44,38,52,60,55,70]} width={180} tone="success" /></Panel>
+      <Panel title="ChartHeatmap" width={340}><ChartHeatmap rows={heatRows} columns={heatCols} data={heatData} /></Panel>
+    </Row>
+    <Row>
+      <Panel title="ChartWaterfall" width={640}><ChartWaterfall items={waterfallItems} height={220} /></Panel>
+      <Panel title="HealthStatusCard" width={280}><HealthStatusCard/></Panel>
+      <Panel title="ChartDetailCard" width={260}>
+        <ChartDetailCard
+          icon="↓" iconTone="critical" title="Absenteísmo" badge={{ label:'Impacto', tone:'critical' }}
+          rows={[
+            { label:'Impacto no NS', value:'-2,4 p.p.', tone:'critical' },
+            { label:'Colaboradores', value:'12' },
+            { label:'Turno', value:'Tarde' },
+            { label:'Recomendação de escala extra.', value:'Acionar banco de horas para cobrir o turno.', full:true, divider:true },
+          ]}
+        />
+      </Panel>
+    </Row>
+    <Row>
+      <Panel title="DataTable" width={1000}><DataTable columns={tableColumns} rows={tableRows} density="compact" /></Panel>
+    </Row>
+    <Row>
+      <Panel title="AnalyticalDataTable" width={1240}>
+        <AnalyticalDataTable groups={analyticalGroups} rows={analyticalRows} density="compact" />
+      </Panel>
+    </Row>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('r')).render(<App/>);
+</script>

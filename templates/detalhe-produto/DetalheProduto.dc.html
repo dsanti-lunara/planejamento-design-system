@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Detalhe do Produto" description="Official Nexo product detail page — authorized / restricted / archived states, breadcrumb-driven navigation out to the catalog, home and product runtime" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<x-import component-from-global-scope="DesignSystem_25dd5c.ShellPortal" fill="{{ true }}" breadcrumb="{{ false }}" contentWidth="fluid" sidebarItems="{{ sidebarItems }}" sidebarLogo="{{ sidebarLogo }}" sidebarState="{{ sidebarState }}" onToggleSidebar="{{ toggleSidebar }}" showUtility="{{ false }}" showBackToPortal="{{ false }}" user="{{ topbarUser }}" hint-size="100%,100vh">
+
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;align-items:center;width:100%;min-width:0">
+<div style="flex:1 1 320px;min-width:0;display:flex">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" hint-size="320px,24px"></x-import>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Voltar ao catálogo" size="compact" style2="tertiary" onClick="{{ goCategory }}" style="flex-shrink:0" hint-size="150px,32px"></x-import>
+</div>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductDetailHeader" name="{{ productName }}" description="{{ productDescription }}" logoFallback="{{ productInitials }}" access="{{ access }}" statusLabel="{{ statusLabel }}" category="{{ categoryKey }}" categoryLabel="{{ categoryLabel }}" tags="{{ tags }}" metadata="{{ metadata }}" favorite="{{ favorite }}" onFavoriteToggle="{{ toggleFavorite }}" showPrimaryAction="{{ showPrimaryAction }}" primaryLabel="{{ primaryLabel }}" primaryState="{{ primaryState }}" onPrimaryAction="{{ onPrimary }}" secondaryLabel="Ver documentação" onSecondaryAction="{{ openDocs }}" style="width:100%" hint-size="100%,196px"></x-import>
+
+<sc-if value="{{ isAuthorized }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:20px;width:100%;min-width:0;align-items:flex-start">
+
+<div style="flex:1 1 480px;min-width:0;display:flex;flex-direction:column;gap:20px">
+
+<section style="display:flex;flex-direction:column;gap:4px;width:100%;min-width:0;background:var(--color-surface-card);border-radius:16px;padding:20px 24px 12px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Informações do produto</h2>
+<sc-for list="{{ info }}" as="row" hint-placeholder-count="8">
+<div style="width:100%;min-width:0;border-bottom:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="{{ row.label }}" value="{{ row.value }}" valueType="{{ row.valueType }}" orientation="horizontal" style="width:100%;height:auto" hint-size="100%,40px"></x-import>
+</div>
+</sc-for>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px;width:100%;min-width:0">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;min-width:0">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Recursos e links</h2>
+<span style="font-family:var(--font-sans);font-size:12px;color:var(--color-text-muted)">{{ resourceCountLabel }}</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ resources }}" as="r" hint-placeholder-count="4">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductResourceLinkRow" title="{{ r.title }}" description="{{ r.description }}" external="{{ r.external }}" state="{{ r.state }}" onClick="{{ r.onClick }}" style="width:100%;min-width:0" hint-size="100%,88px"></x-import>
+</sc-for>
+</div>
+</section>
+
+</div>
+
+<aside style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:12px">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Responsáveis</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ owners }}" as="o" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductOwnerCard" role="{{ o.role }}" name="{{ o.name }}" secondaryInfo="{{ o.area }}" style="width:100%;min-width:0" hint-size="100%,92px"></x-import>
+</sc-for>
+</div>
+<p style="margin:4px 0 0;font-family:var(--font-sans);font-size:12px;line-height:17px;color:var(--color-text-secondary)">Dúvidas sobre métricas, cargas ou permissões devem ser tratadas com os responsáveis acima.</p>
+</aside>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isBlocked }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:20px;width:100%;min-width:0;align-items:flex-start">
+
+<div style="flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:20px">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductAccessState" state="{{ blockedState }}" title="{{ blockedTitle }}" description="{{ blockedDescription }}" showStatus="{{ false }}" showAction="{{ false }}" alertTone="{{ blockedAlertTone }}" alertTitle="{{ blockedAlertTitle }}" alertDescription="{{ blockedAlertDescription }}" style="width:100%" hint-size="100%,320px"></x-import>
+
+<sc-if value="{{ showHistoricalResources }}" hint-placeholder-val="{{ false }}">
+<section style="display:flex;flex-direction:column;gap:4px;width:100%;min-width:0;background:var(--color-surface-card);border-radius:16px;padding:20px 24px 12px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Informação histórica</h2>
+<sc-for list="{{ historicalInfo }}" as="row" hint-placeholder-count="5">
+<div style="width:100%;min-width:0;border-bottom:1px solid var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="{{ row.label }}" value="{{ row.value }}" valueType="{{ row.valueType }}" orientation="horizontal" style="width:100%;height:auto" hint-size="100%,40px"></x-import>
+</div>
+</sc-for>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px;width:100%;min-width:0">
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Documentação histórica</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ historicalResources }}" as="r" hint-placeholder-count="2">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductResourceLinkRow" title="{{ r.title }}" description="{{ r.description }}" external="{{ r.external }}" state="{{ r.state }}" onClick="{{ r.onClick }}" style="width:100%;min-width:0" hint-size="100%,88px"></x-import>
+</sc-for>
+</div>
+</section>
+</sc-if>
+</div>
+
+<aside style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px;align-items:stretch">
+<div style="display:flex;justify-content:center;width:100%;min-width:0;background:var(--color-surface-subtle);border-radius:16px;padding:20px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.StateIllustrationSlot" illustration="{{ blockedIllustration }}" style="width:100%;max-width:260px;height:auto" hint-size="260px,190px"></x-import>
+</div>
+<h2 style="margin:0;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">{{ ownersHeading }}</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ blockedOwners }}" as="o" hint-placeholder-count="2">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductOwnerCard" role="{{ o.role }}" name="{{ o.name }}" secondaryInfo="{{ o.area }}" style="width:100%;min-width:0" hint-size="100%,92px"></x-import>
+</sc-for>
+</div>
+</aside>
+
+</div>
+</sc-if>
+
+</x-import>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;access&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;authorized&quot;,&quot;restricted&quot;,&quot;archived&quot;],&quot;default&quot;:&quot;authorized&quot;,&quot;tsType&quot;:&quot;\&quot;authorized\&quot; | \&quot;restricted\&quot; | \&quot;archived\&quot;&quot;,&quot;section&quot;:&quot;Estado da página&quot;}}">
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, favorite: true };
+
+  categoriesData = [
+    { key: 'todos', label: 'Todos os produtos', iconName: 'IconNavPortal' },
+    { key: 'operacional', label: 'Operacional', iconName: 'IconNavIntraday' },
+    { key: 'planejamento', label: 'Planejamento', iconName: 'IconCalendar' },
+    { key: 'financeiro', label: 'Financeiro', iconName: 'IconNavFinance' },
+    { key: 'gestão', label: 'Gestão', iconName: 'IconNavCapacity' },
+    { key: 'clientes', label: 'Clientes', iconName: 'IconNavDemand' },
+    { key: 'dados & inteligência', label: 'Dados & Inteligência', iconName: 'IconDataState' },
+  ];
+
+  // Canonical routes served by this template (prototype paths in parentheses):
+  //   /produtos/:productId                      → this page
+  //   /                                         → ../portal-home/PortalHome.dc.html
+  //   /produtos?categoria=<categoria>           → ../catalogo/Catalogo.dc.html?categoria=…
+  //   /r/:productId                             → ../runtime/Runtime.dc.html?produto=…
+  routes = {
+    home: () => '../portal-home/PortalHome.dc.html',
+    catalog: (cat) => '../catalogo/Catalogo.dc.html' + (cat ? ('?categoria=' + encodeURIComponent(cat)) : ''),
+    runtime: (id, name) => '../runtime/Runtime.dc.html?produto=' + encodeURIComponent(name) + '&id=' + encodeURIComponent(id),
+    docs: (id) => '../catalogo/Catalogo.dc.html?doc=' + encodeURIComponent(id),
+  };
+
+  slug(name) {
+    return String(name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  catalog = {
+    'Painel de Clientes': {
+      initials: 'PC', categoryKey: 'clientes',
+      discontinuedAt: '30/06/2026',
+      replacement: 'Painel de Clientes 360',
+      description: 'Satisfação, churn e jornada dos principais contratos.',
+      tags: ['Claro', 'Intraday', 'Análises'],
+      metadata: 'Atualizado hoje às 07:30',
+      info: [
+        { label: 'Categoria', value: 'Clientes' },
+        { label: 'Área responsável', value: 'Diretoria de Clientes' },
+        { label: 'Atualização', value: 'Intraday — a cada 30 minutos' },
+        { label: 'Última carga', value: 'Hoje às 07:30' },
+        { label: 'Certificação', value: 'Homologado', valueType: 'status' },
+        { label: 'Fonte de dados', value: 'DW Corporativo · CRM Claro', valueType: 'link' },
+        { label: 'Sensibilidade', value: 'Interno — dados de contrato' },
+        { label: 'Público-alvo', value: 'Gestão de contratos e CS' },
+      ],
+      owners: [
+        { role: 'Product Owner', name: 'Ana Ferreira', area: 'Planejamento Analytics' },
+        { role: 'Tech Owner', name: 'Rafael Lima', area: 'Engenharia de Dados' },
+        { role: 'Data Owner', name: 'Camila Nunes', area: 'Governança de Dados' },
+      ],
+    },
+  };
+
+  fallbackProduct = {
+    initials: 'NX', categoryKey: 'operacional',
+    description: 'Produto do catálogo Nexo.',
+    tags: ['Claro', 'Análises'],
+    metadata: 'Atualizado hoje às 07:30',
+    info: [
+      { label: 'Categoria', value: 'Operacional' },
+      { label: 'Área responsável', value: 'Planejamento Analytics' },
+      { label: 'Atualização', value: 'Diária — 06:00' },
+      { label: 'Certificação', value: 'Homologado', valueType: 'status' },
+    ],
+    owners: [
+      { role: 'Product Owner', name: 'Ana Ferreira', area: 'Planejamento Analytics' },
+      { role: 'Tech Owner', name: 'Rafael Lima', area: 'Engenharia de Dados' },
+    ],
+  };
+
+  query(key) {
+    try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; }
+  }
+
+  icon(name) {
+    const ns = window.DesignSystem_25dd5c || {};
+    const Cmp = ns[name];
+    return Cmp ? React.createElement(Cmp) : null;
+  }
+
+  categoryLabel(key) { return (this.categoriesData.find(c => c.key === key) || {}).label || 'Catálogo'; }
+
+  goHome = () => { window.location.href = this.routes.home(); };
+  goCatalog = (categoryKey) => { window.location.href = this.routes.catalog(categoryKey); };
+  // /r/:productId — só disponível no estado authorized.
+  openRuntime = () => {
+    if (this.accessState() !== 'authorized') return;
+    window.location.href = this.routes.runtime(this.slug(this.productName()), this.productName());
+  };
+  openDocs = () => { window.location.href = this.routes.docs(this.slug(this.productName())); };
+  toggleFavorite = (v) => this.setState({ favorite: v });
+  toggleSidebar = () => this.setState(s => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+
+  productName() { return this.query('produto') || 'Painel de Clientes'; }
+  accessState() {
+    const q = (this.query('estado') || '').toLowerCase();
+    if (q === 'authorized' || q === 'restricted' || q === 'archived') return q;
+    return this.props.access ?? 'authorized';
+  }
+
+  renderVals() {
+    const name = this.productName();
+    const p = this.catalog[name] || this.fallbackProduct;
+    const access = this.accessState();
+    const catLabel = this.categoryLabel(p.categoryKey);
+    const ns = window.DesignSystem_25dd5c || {};
+
+    const resources = [
+      { title: 'Documentação do produto', description: 'Guia institucional, definições e regras de cálculo das métricas.', external: false, state: 'default', onClick: this.openDocs },
+      { title: 'Dicionário de métricas', description: '38 indicadores com fórmula, granularidade e dono da regra.', external: false, state: 'default', onClick: this.openDocs },
+      { title: 'Abrir no runtime de análise', description: 'Experiência completa de exploração, filtros e exportação.', external: true, state: access === 'authorized' ? 'default' : 'disabled', onClick: this.openRuntime },
+      { title: 'Solicitar melhoria', description: 'Abre uma demanda no fluxo de governança do produto.', external: true, state: 'default', onClick: this.openDocs },
+    ];
+
+    const productId = this.slug(name);
+    const discontinuedAt = p.discontinuedAt || null;
+    const historicalOwner = (p.owners || [])[0];
+    const historicalInfo = [
+      { label: 'Identificador do produto', value: productId, valueType: 'copy' },
+      { label: 'Categoria', value: catLabel },
+      ...(discontinuedAt ? [{ label: 'Descontinuado em', value: discontinuedAt, valueType: 'copy' }] : []),
+      { label: 'Última carga registrada', value: '29/06/2026 · 07:30', valueType: 'copy' },
+      ...(p.replacement ? [{ label: 'Produto substituto', value: p.replacement, valueType: 'link' }] : []),
+      ...(historicalOwner ? [{ label: 'Owner do histórico', value: historicalOwner.name + ' · ' + historicalOwner.area }] : []),
+      { label: 'Retenção dos dados', value: 'Somente leitura para auditoria' },
+    ];
+
+    const historicalResources = [
+      { title: 'Guia do produto (arquivado)', description: 'Definições e regras vigentes até a descontinuação em ' + (discontinuedAt || '2026') + '.', external: false, state: 'default', onClick: this.openDocs },
+      { title: 'Dicionário de métricas (arquivado)', description: 'Mantido apenas para auditoria e comparações retroativas.', external: false, state: 'default', onClick: this.openDocs },
+      { title: 'Abrir no runtime de análise', description: 'Indisponível — o produto não é mais executado.', external: true, state: 'disabled' },
+    ];
+
+    const statusLabel = access === 'authorized' ? 'Acesso autorizado'
+      : access === 'restricted' ? 'Acesso restrito'
+      : 'Produto arquivado';
+    const archivedActionLabel = p.replacement ? 'Ver produto substituto' : 'Ver catálogo de ' + catLabel;
+    const primaryLabel = access === 'authorized' ? 'Acessar produto' : archivedActionLabel;
+    const onPrimary = access === 'authorized' ? this.openRuntime : () => this.goCatalog(p.categoryKey);
+
+    return {
+      productName: name,
+      productDescription: p.description,
+      productInitials: p.initials,
+      categoryKey: p.categoryKey,
+      categoryLabel: catLabel,
+      tags: p.tags,
+      productId,
+      metadata: access === 'archived'
+        ? ('Descontinuado em ' + (p.discontinuedAt || '2026') + ' · última carga 29/06/2026')
+        : p.metadata,
+      access, statusLabel, primaryLabel, onPrimary,
+      showPrimaryAction: access !== 'restricted',
+      primaryState: 'default',
+      favorite: this.state.favorite,
+      toggleFavorite: this.toggleFavorite,
+      openDocs: this.openDocs,
+      isAuthorized: access === 'authorized',
+      isBlocked: access !== 'authorized',
+      info: [
+        { label: 'Identificador do produto', value: productId, valueType: 'copy' },
+        ...(p.info || []),
+      ].map(r => ({ ...r, valueType: r.valueType || 'text' })),
+      resources,
+      resourceCountLabel: resources.length + ' recursos',
+      owners: p.owners,
+      historicalResources, historicalInfo,
+      showHistoricalResources: access === 'archived',
+      blockedState: access === 'archived' ? 'archived' : 'restricted',
+      // Não repete o título do produto nem o rótulo de status já exibido no ProductDetailHeader.
+      blockedTitle: access === 'archived'
+        ? 'Registro histórico no Product Registry'
+        : 'Acesso restrito',
+      blockedAlertTone: access === 'archived' ? 'warning' : 'info',
+      blockedDescription: access === 'archived'
+        ? ('Este produto foi descontinuado' + (p.discontinuedAt ? (' em ' + p.discontinuedAt) : '') + ' e não é mais executado. O registro permanece no Product Registry como referência histórica.')
+        : 'Seu CR e FUNCAORM atuais não possuem acesso a este produto.',
+      blockedAlertTitle: access === 'archived'
+        ? (p.replacement ? 'Produto substituto disponível' : 'Sem produto substituto')
+        : 'Como o acesso é definido',
+      blockedAlertDescription: access === 'archived'
+        ? (p.replacement
+            ? ('Substituído por “' + p.replacement + '”. A documentação histórica permanece disponível para auditoria.')
+            : ('Sem produto substituto definido. A documentação histórica permanece disponível para auditoria em ' + catLabel + '.'))
+        : 'O acesso a este produto é definido pelas regras corporativas de CR e FUNCAORM vigentes em Hominum.',
+      blockedIllustration: access === 'archived'
+        ? (ns.IllustrationSystemArchived ? React.createElement(ns.IllustrationSystemArchived) : null)
+        : (ns.IllustrationSystemRestricted ? React.createElement(ns.IllustrationSystemRestricted) : null),
+      ownersHeading: access === 'archived' ? 'Responsáveis pelo histórico' : 'Responsáveis pelo produto',
+      blockedOwners: (p.owners || []).slice(0, 2),
+      goCategory: () => this.goCatalog(p.categoryKey),
+      crumbs: [
+        { label: 'Início', icon: this.icon('IconNavHome'), onClick: this.goHome },
+        { label: catLabel, onClick: () => this.goCatalog(p.categoryKey) },
+        { label: name, current: true },
+      ],
+      sidebarState: this.state.sidebarCollapsed ? 'collapsed' : 'expanded',
+      toggleSidebar: this.toggleSidebar,
+      topbarUser: { name: 'Ana Ferreira', role: 'Planejamento Analytics' },
+      sidebarLogo: this.state.sidebarCollapsed
+        ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+        : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } }),
+      sidebarItems: [
+        { label: 'Início', icon: this.icon('IconNavHome'), onClick: this.goHome },
+        { section: 'CATÁLOGO' },
+        ...this.categoriesData.map(c => ({
+          label: c.label, icon: this.icon(c.iconName), active: c.key === p.categoryKey,
+          onClick: () => this.goCatalog(c.key === 'todos' ? null : c.key),
+        })),
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

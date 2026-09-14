@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Novo comunicado" description="Rotas /admin/comunicados/novo e /admin/comunicados/:noticeId/editar — mesmo formulário para criar e editar (mode=novo|editar). Seções Conteúdo, Público, Vigência, Exibição, Preview (HomeAnnouncementItem real)." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0;position:relative">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<div style="width:100%;max-width:1080px;margin:0 auto;padding:24px 28px 0;box-sizing:border-box">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="300px,24px"></x-import>
+</div>
+
+<div style="width:100%;max-width:1080px;margin:0 auto;padding:16px 28px 0;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-family:var(--font-sans);font-size:22px;font-weight:700;color:var(--color-text-primary)">{{ pageTitle }}</h1>
+<p style="margin:0;font-family:var(--font-sans);font-size:13px;color:var(--color-text-secondary)">{{ pageSubtitle }}</p>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;padding:20px 28px 120px;align-items:start;box-sizing:border-box;width:100%;max-width:1080px;margin:0 auto;min-width:0">
+
+<div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Conteúdo" description="Título e mensagem exibidos ao usuário." contentSlot="{{ contentSlot }}" style="width:100%" hint-size="100%,220px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Público" description="Quem deve visualizar este comunicado." contentSlot="{{ audienceSlot }}" style="width:100%" hint-size="100%,140px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Vigência" description="Período em que o comunicado fica visível." contentSlot="{{ vigenciaSlot }}" style="width:100%" hint-size="100%,160px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.FormFormSection" title="Exibição" description="Onde o comunicado deve aparecer." contentSlot="{{ exibicaoSlot }}" style="width:100%" hint-size="100%,80px"></x-import>
+</div>
+
+<div style="position:sticky;top:0;display:flex;flex-direction:column;gap:10px;min-width:0">
+<span style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.02em;color:var(--color-text-muted);text-transform:uppercase">Preview</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeAnnouncementItem" title="{{ previewTitle }}" type="{{ previewType }}" description="{{ previewDescription }}" showDate="{{ true }}" date="{{ previewDate }}" showCTA="{{ false }}" style="width:100%" hint-size="100%,112px"></x-import>
+<span style="font-family:var(--font-sans);font-size:12px;color:var(--color-text-muted)">Este é o mesmo componente exibido na Home do Nexo.</span>
+</div>
+
+</div>
+</div>
+
+<div style="position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:flex-end;gap:10px;padding:16px 28px;box-sizing:border-box;background:var(--color-surface-card);box-shadow:inset 0 1px 0 var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ goList }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ publishLabel }}" style2="primary" state="{{ publishState }}" onClick="{{ handlePublish }}" hint-size="160px,40px"></x-import>
+</div>
+</div>
+</div>
+
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CATEGORY_LABELS = ['Operacional', 'Planejamento', 'Financeiro', 'Gestão', 'Clientes', 'Dados & Inteligência'];
+const PRODUCT_LABELS = ['Claro Brasil', 'Painel de Clientes', 'Banco de Horas', 'Governança de Dados', 'Painel Financeiro', 'Loja Digital'];
+const TYPE_LABELS = ['Informação', 'Novidade', 'Manutenção'];
+const TYPE_TO_PREVIEW = { 'Informação': 'info', 'Novidade': 'release', 'Manutenção': 'maintenance' };
+const NOTICES = {
+  'painel-clientes-v2': { title: 'Nova versão do Painel de Clientes', message: 'O Painel de Clientes recebeu melhorias de navegação e novos indicadores.', type: 'Novidade', audienceMode: 'produtos', products: ['Painel de Clientes'], startDate: '2026-08-24', startTime: '09:00', endDate: '2026-09-07', endTime: '18:00', noEndDate: false, showOnHome: true },
+  'manutencao-nexo': { title: 'Manutenção programada do Nexo', message: 'O Nexo ficará indisponível para manutenção programada.', type: 'Manutenção', audienceMode: 'todos', startDate: '2026-08-30', startTime: '22:00', endDate: '2026-08-31', endTime: '02:00', noEndDate: false, showOnHome: true },
+  'nova-categoria-dados': { title: 'Nova categoria Dados & Inteligência', message: 'Produtos de dados e inteligência agora estão organizados em uma nova categoria.', type: 'Informação', audienceMode: 'categorias', categories: ['Dados & Inteligência'], startDate: '2026-08-20', startTime: '08:00', endDate: '2026-08-27', endTime: '18:00', noEndDate: false, showOnHome: true },
+  'atualizacao-banco-horas': { title: 'Atualização do Banco de Horas', message: 'Nova versão do Banco de Horas publicada com correções.', type: 'Novidade', audienceMode: 'produtos', products: ['Banco de Horas'], startDate: '2026-08-10', startTime: '08:00', endDate: '2026-08-17', endTime: '18:00', noEndDate: false, showOnHome: true },
+  'rascunho-financeiro': { title: 'Ajuste no Painel Financeiro', message: 'Ajustes de layout no Painel Financeiro.', type: 'Informação', audienceMode: 'produtos', products: ['Painel Financeiro'], startDate: '', startTime: '', endDate: '', endTime: '', noEndDate: true, showOnHome: true },
+};
+
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    mode: 'novo', noticeId: null,
+    title: '', message: '', type: 'Informação',
+    audienceMode: 'todos', categories: [], products: [],
+    startDate: '', startTime: '', endDate: '', endTime: '', noEndDate: false,
+    showOnHome: true,
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+
+  componentDidMount() {
+    const isEdit = this.query('mode') === 'editar';
+    const noticeId = this.query('noticeId');
+    if (isEdit && noticeId && NOTICES[noticeId]) {
+      this.setState({ mode: 'editar', noticeId, ...NOTICES[noticeId] });
+    }
+  }
+
+  setTitle = (e) => this.setState({ title: e.target.value });
+  setMessage = (e) => this.setState({ message: e.target.value });
+  setType = (v) => this.setState({ type: v });
+  setAudienceMode = (v) => this.setState({ audienceMode: v });
+  setCategories = (v) => this.setState({ categories: v });
+  setProducts = (v) => this.setState({ products: v });
+  setStartDate = (e) => this.setState({ startDate: e.target.value });
+  setStartTime = (e) => this.setState({ startTime: e.target.value });
+  setEndDate = (e) => this.setState({ endDate: e.target.value });
+  setEndTime = (e) => this.setState({ endTime: e.target.value });
+  setNoEndDate = (v) => this.setState({ noEndDate: !!v });
+  setShowOnHome = (v) => this.setState({ showOnHome: !!v });
+
+  canPublish() {
+    const s = this.state;
+    if (!s.title.trim() || !s.message.trim() || !s.type) return false;
+    if (s.audienceMode === 'categorias' && !s.categories.length) return false;
+    if (s.audienceMode === 'produtos' && !s.products.length) return false;
+    if (!s.startDate) return false;
+    if (!s.noEndDate && !s.endDate) return false;
+    return true;
+  }
+
+  handlePublish = () => { if (this.canPublish()) this.goList(); };
+
+  renderVals() {
+    const ns = this.ns();
+    const s = this.state;
+
+    const contentSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' } },
+      React.createElement(ns.InputText, { label: 'Título', showLabel: true, required: true, value: s.title, onChange: this.setTitle, placeholder: 'Ex.: Nova versão disponível', style: { width: '100%' } }),
+      React.createElement(ns.InputTextarea, { label: 'Mensagem', state: s.message ? 'filled' : 'empty', value: s.message, onChange: this.setMessage, maxLength: 240, style: { width: '100%' } }),
+      React.createElement('div', { style: { display: 'flex', gap: 10 } },
+        TYPE_LABELS.map((t) => React.createElement(ns.Button, { key: t, label: t, style2: s.type === t ? 'primary' : 'secondary', onClick: () => this.setType(t) }))));
+
+    const audienceSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' } },
+      React.createElement('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap' } },
+        React.createElement(ns.Button, { label: 'Todos os usuários', style2: s.audienceMode === 'todos' ? 'primary' : 'secondary', onClick: () => this.setAudienceMode('todos') }),
+        React.createElement(ns.Button, { label: 'Categorias específicas', style2: s.audienceMode === 'categorias' ? 'primary' : 'secondary', onClick: () => this.setAudienceMode('categorias') }),
+        React.createElement(ns.Button, { label: 'Produtos específicos', style2: s.audienceMode === 'produtos' ? 'primary' : 'secondary', onClick: () => this.setAudienceMode('produtos') })),
+      s.audienceMode === 'categorias' && React.createElement(ns.InputMultiSelect, { label: 'Categorias', value: s.categories, options: CATEGORY_LABELS, onChange: this.setCategories, style: { width: '100%', maxWidth: 380 } }),
+      s.audienceMode === 'produtos' && React.createElement(ns.InputMultiSelect, { label: 'Produtos', value: s.products, options: PRODUCT_LABELS, onChange: this.setProducts, style: { width: '100%', maxWidth: 380 } }));
+
+    const vigenciaSlot = React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' } },
+      React.createElement('div', { style: { display: 'flex', gap: 12, flexWrap: 'wrap' } },
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+          React.createElement('label', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)' } }, 'Data inicial'),
+          React.createElement('input', { type: 'date', value: s.startDate, onChange: this.setStartDate, style: { fontFamily: 'var(--font-sans)', fontSize: 13, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--color-border-default)', background: 'var(--color-surface-card)', color: 'var(--color-text-primary)' } })),
+        React.createElement(ns.InputTime, { label: 'Hora inicial', value: s.startTime, onChange: this.setStartTime, state: s.startTime ? 'filled' : 'empty' }),
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, opacity: s.noEndDate ? 0.5 : 1 } },
+          React.createElement('label', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)' } }, 'Data final'),
+          React.createElement('input', { type: 'date', value: s.endDate, disabled: s.noEndDate, onChange: this.setEndDate, style: { fontFamily: 'var(--font-sans)', fontSize: 13, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--color-border-default)', background: 'var(--color-surface-card)', color: 'var(--color-text-primary)' } })),
+        React.createElement(ns.InputTime, { label: 'Hora final', value: s.endTime, onChange: this.setEndTime, state: s.noEndDate ? 'disabled' : (s.endTime ? 'filled' : 'empty') })),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+        React.createElement(ns.Toggle, { checked: s.noEndDate, onChange: this.setNoEndDate }),
+        React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--color-text-primary)' } }, 'Sem data de encerramento (ativo até encerrar manualmente)')),
+      React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--color-text-muted)' } }, 'Horário de Brasília (GMT-3).'));
+
+    const exibicaoSlot = React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+      React.createElement(ns.Toggle, { checked: s.showOnHome, onChange: this.setShowOnHome }),
+      React.createElement('span', { style: { fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--color-text-primary)' } }, 'Exibir na Home'));
+
+    const previewDate = s.startDate ? (s.startDate.split('-').reverse().join('/') + (s.startTime ? ', ' + s.startTime : '')) : 'Data a definir';
+
+    let pageTitle = s.mode === 'editar' ? 'Editar comunicado' : 'Novo comunicado';
+    let pageSubtitle = s.mode === 'editar' ? 'Altere o conteúdo, público ou vigência deste comunicado.' : 'Crie um aviso exibido aos usuários do Nexo.';
+
+    return {
+      contentSlot, audienceSlot, vigenciaSlot, exibicaoSlot,
+      previewTitle: s.title || 'Título do comunicado', previewType: TYPE_TO_PREVIEW[s.type] || 'info', previewDescription: s.message || 'A mensagem do comunicado aparece aqui.', previewDate,
+      pageTitle, pageSubtitle,
+      publishLabel: s.mode === 'editar' ? 'Salvar alterações' : 'Criar comunicado',
+      publishState: this.canPublish() ? 'default' : 'disabled',
+      handlePublish: this.handlePublish, goList: this.goList,
+      crumbs: [
+        { label: 'Comunicados', onClick: this.goList },
+        { label: pageTitle, current: true },
+      ],
+      noop: this.noop,
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed: s.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: s.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        s.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; } },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), active: true, onClick: this.goList },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

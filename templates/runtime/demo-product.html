@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{--font-sans:"Plus Jakarta Sans",Arial,sans-serif;--bg:#f7f9fc;--surface:#fff;--surface-subtle:#f3f6fb;--text:#071b4a;--text-secondary:#58709c;--border:#dfe6f1;--brand:#1267e8;--brand-soft:#edf4ff;--success:#159455;--danger:#d84a4a}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.product{min-height:100vh;display:flex;flex-direction:column}
+.product-nav{height:52px;padding:0 24px;display:flex;align-items:center;gap:28px;background:var(--surface);border-bottom:1px solid var(--border)}
+.product-name{font-size:14px;font-weight:700;margin-right:12px}
+.tab{height:52px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-secondary);cursor:pointer;padding:0 2px;font-size:13px;font-weight:500}
+.tab:hover{color:var(--brand)}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:700}
+.content{flex:1;padding:24px}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:20px}
+.page-header h1{margin:0 0 6px;font-size:24px;line-height:1.25}
+.page-header p{margin:0;color:var(--text-secondary);font-size:13px}
+.filters{display:flex;gap:10px}
+.filter{height:36px;min-width:140px;padding:0 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.kpi{padding:16px}
+.kpi-label{color:var(--text-secondary);font-size:12px;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;margin-bottom:6px}
+.delta{font-size:12px;font-weight:600}
+.positive{color:var(--success)}
+.negative{color:var(--danger)}
+.analytics{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,0.8fr);gap:16px;margin-bottom:16px}
+.chart-card,.diagnostic{padding:18px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:18px}
+.chart{height:240px;position:relative;overflow:hidden;border-radius:8px;background:linear-gradient(to right,transparent 49px,#edf1f7 50px) 0 0/50px 100%,linear-gradient(to bottom,transparent 49px,#edf1f7 50px) 0 0/100% 50px}
+.chart svg{width:100%;height:100%}
+.diagnostic-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.diagnostic-item:last-child{border-bottom:0}
+.dot{width:9px;height:9px;margin-top:5px;border-radius:50%;background:var(--brand);flex:0 0 auto}
+.diagnostic-item strong{display:block;font-size:12px;margin-bottom:3px}
+.diagnostic-item span{font-size:11px;color:var(--text-secondary)}
+.table-card{overflow:hidden}
+.table-header{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--text-secondary);font-size:11px;background:var(--surface-subtle);font-weight:600}
+tbody tr:hover{background:#fafcff}
+@media (max-width:1050px){.kpis{grid-template-columns:repeat(2,1fr)}.analytics{grid-template-columns:1fr}.page-header{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="product">
+<nav class="product-nav">
+<button class="tab active" data-page="visao-geral">Visão Geral</button>
+<button class="tab" data-page="intraday">Intraday &amp; Intrahora</button>
+<button class="tab" data-page="demanda">Demanda &amp; Serviço</button>
+</nav>
+<section class="content">
+<header class="page-header">
+<div>
+<h1 id="pageTitle">Visão Geral</h1>
+<p>Resumo consolidado dos principais indicadores da operação.</p>
+</div>
+<div class="filters">
+<select class="filter"><option>Hoje</option><option>Ontem</option><option>Últimos 7 dias</option></select>
+<select class="filter"><option>Todas as operações</option><option>Controle</option><option>Pós-pago</option></select>
+</div>
+</header>
+<section class="kpis">
+<article class="card kpi"><div class="kpi-label">Recebidas</div><div class="kpi-value">34.718</div><div class="delta positive">+7,2% vs. plano</div></article>
+<article class="card kpi"><div class="kpi-label">Atendidas</div><div class="kpi-value">33.459</div><div class="delta positive">+7,6% vs. plano</div></article>
+<article class="card kpi"><div class="kpi-label">Nível de Serviço</div><div class="kpi-value">82,4%</div><div class="delta negative">-1,3 p.p.</div></article>
+<article class="card kpi"><div class="kpi-label">TMO</div><div class="kpi-value">311s</div><div class="delta negative">+6s vs. plano</div></article>
+</section>
+<section class="analytics">
+<article class="card chart-card">
+<div class="card-title">Evolução do indicador</div>
+<div class="chart">
+<svg viewBox="0 0 700 240" preserveAspectRatio="none">
+<defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1267e8" stop-opacity=".22"/><stop offset="100%" stop-color="#1267e8" stop-opacity="0"/></linearGradient></defs>
+<path d="M0 210 C60 200, 80 150, 130 135 S220 110, 270 120 S350 80, 410 95 S500 60, 555 75 S640 48, 700 52 L700 240 L0 240 Z" fill="url(#fill)"/>
+<path d="M0 210 C60 200, 80 150, 130 135 S220 110, 270 120 S350 80, 410 95 S500 60, 555 75 S640 48, 700 52" fill="none" stroke="#1267e8" stroke-width="3"/>
+</svg>
+</div>
+</article>
+<aside class="card diagnostic">
+<div class="card-title">Diagnóstico rápido</div>
+<div class="diagnostic-item"><div class="dot"></div><div><strong>Recebidas acima do plano</strong><span>Maior impacto entre 08:00 e 10:00.</span></div></div>
+<div class="diagnostic-item"><div class="dot"></div><div><strong>TMO acima da referência</strong><span>Principal pressão concentrada em Controle.</span></div></div>
+<div class="diagnostic-item"><div class="dot"></div><div><strong>Capacidade próxima ao esperado</strong><span>HC realizado permanece dentro da faixa planejada.</span></div></div>
+</aside>
+</section>
+<section class="card table-card">
+<div class="table-header"><div class="card-title" style="margin:0">Resultado por operação</div></div>
+<table>
+<thead><tr><th>Operação</th><th>Recebidas</th><th>Atendidas</th><th>NS</th><th>TMO</th><th>HC</th></tr></thead>
+<tbody>
+<tr><td>Suporte Técnico</td><td>12.842</td><td>12.217</td><td>81,6%</td><td>342s</td><td>48,1</td></tr>
+<tr><td>Atendimento Chat</td><td>9.115</td><td>8.865</td><td>84,2%</td><td>278s</td><td>28,6</td></tr>
+<tr><td>Vendas</td><td>6.220</td><td>6.002</td><td>82,8%</td><td>296s</td><td>21,4</td></tr>
+</tbody>
+</table>
+</section>
+</section>
+</main>
+<script>
+const tabs = document.querySelectorAll(".tab");
+const title = document.querySelector("#pageTitle");
+const pageNames = { "visao-geral": "Visão Geral", "intraday": "Intraday & Intrahora", "demanda": "Demanda & Serviço" };
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    tabs.forEach(item => item.classList.remove("active"));
+    tab.classList.add("active");
+    const page = tab.dataset.page;
+    title.textContent = pageNames[page];
+    history.pushState({ page }, "", "#" + page);
+    if (window.parent !== window) window.parent.postMessage({ type: "nexo:route", path: page }, "*");
+  });
+});
+</script>
+</body>
+</html>

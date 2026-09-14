@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Saúde" description="Rota /admin/saude — disponibilidade operacional do Nexo, Power BI e Projeto Nexo. KPIs, saúde do portal, tabela de produtos, tabela de atenção e detalhe em drawer com histórico." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0" data-screen-label="Saúde">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:16px;padding:24px 28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminPageHeader" title="Saúde" description="Acompanhe a disponibilidade do Nexo, produtos e integrações." breadcrumb="{{ false }}" status="{{ false }}" primaryAction="{{ false }}" secondaryAction="{{ false }}" overflow="{{ false }}" style="width:100%" hint-size="100%,64px"></x-import>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;min-width:0">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminSummaryKPICard" label="{{ k.label }}" value="{{ k.value }}" secondary="{{ k.secondary }}" secondaryTone="{{ k.tone }}" style="width:100%;min-width:0" hint-size="100%,96px"></x-import>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:row;align-items:center;gap:14px;flex-wrap:wrap;background:var(--color-surface-card);border-radius:12px;padding:14px 18px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);width:100%">
+<div style="display:flex;align-items:center;gap:10px;min-width:180px;flex-shrink:0">
+{{ portal.dotEl }}
+<span style="font-size:14px;font-weight:700;color:var(--color-text-primary)">Nexo Portal</span>
+</div>
+{{ portal.statusEl }}
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-secondary)"><span style="color:var(--color-text-muted)">Última verificação</span><span style="font-family:var(--font-mono);color:var(--color-text-primary)">{{ portal.lastChecked }}</span></div>
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-secondary)"><span style="color:var(--color-text-muted)">Tempo de resposta</span><span style="font-family:var(--font-mono);color:var(--color-text-primary)">{{ portal.responseTime }}</span></div>
+</div>
+
+<div style="display:flex;flex-direction:row;align-items:flex-start;gap:10px;flex-wrap:wrap;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.AdminFilterBar" showSearch="{{ false }}" showStatus="{{ true }}" statusLabel="Status" statusOptions="{{ statusOptions }}" statusValue="{{ filters.status }}" onStatusChange="{{ onStatusChange }}" showProduct="{{ true }}" productLabel="Produto" productOptions="{{ productOptions }}" productValue="{{ filters.product }}" onProductChange="{{ onProductChange }}" showPeriod="{{ false }}" activeFilters="{{ hasActiveFilters }}" activeFilterChips="{{ activeFilterChips }}" clearFilters="{{ hasActiveFilters }}" onClearFilters="{{ clearFilters }}" onMoreFilters="{{ toggleMoreFilters }}" style="flex:1 1 700px;min-width:360px" hint-size="700px,64px"></x-import>
+</div>
+
+<sc-if value="{{ isMoreFiltersOpen }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;background:var(--color-surface-card);border-radius:12px;padding:14px 16px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Tipo de conteúdo" value="{{ filters.contentType }}" options="{{ contentTypeOptions }}" onChange="{{ onContentTypeChange }}" style="min-width:200px" hint-size="200px,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.InputMultiSelect" label="Responsável" value="{{ filters.owner }}" options="{{ ownerOptions }}" onChange="{{ onOwnerChange }}" style="min-width:200px" hint-size="200px,44px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" size="compact" onClick="{{ toggleMoreFilters }}" hint-size="90px,32px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasAnyData }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px;background:var(--color-surface-card);border-radius:12px;padding:16px 18px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ChartHeader" title="Produtos" showAction="{{ false }}" style="width:100%" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ columns }}" rows="{{ pageRows }}" rowKey="{{ rowKey }}" onRowClick="{{ openDetail }}" hoverable="{{ true }}" density="standard" stickyHeader="{{ true }}" style="width:100%" hint-size="100%,420px"></x-import>
+</div>
+
+<sc-if value="{{ hasAttention }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px;background:var(--color-surface-card);border-radius:12px;padding:16px 18px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ChartHeader" title="Necessitam atenção" showAction="{{ false }}" style="width:100%" hint-size="100%,28px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataTable" columns="{{ attentionColumns }}" rows="{{ attentionRows }}" rowKey="{{ rowKey }}" onRowClick="{{ openDetail }}" hoverable="{{ true }}" density="standard" stickyHeader="{{ true }}" style="width:100%" hint-size="100%,240px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ !hasAttention }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="empty" text1="Todos os produtos monitorados estão operando normalmente." text2="Nenhuma ação necessária no momento." style="width:100%" hint-size="100%,220px"></x-import>
+</sc-if>
+
+</sc-if>
+<sc-if value="{{ !hasAnyData }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataDataState" type="noresults" text1="Nenhum produto encontrado para os filtros selecionados." text2="Ajuste os filtros aplicados." style="width:100%" hint-size="100%,260px"></x-import>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isDetailOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeDetail }}" style="position:fixed;inset:0;z-index:1000;display:flex;justify-content:flex-end;background:var(--color-surface-overlay)">
+<div onclick="{{ stopClick }}" style="width:480px;max-width:100%;height:100%;overflow-y:auto;background:var(--color-surface-raised);box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px;font-family:var(--font-sans)">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<h2 style="margin:0;font-size:17px;font-weight:700;color:var(--color-text-primary)">{{ detail.name }}</h2>
+<span style="font-size:12px;color:var(--color-text-muted)">{{ detail.contentType }}</span>
+</div>
+{{ detail.statusEl }}
+</div>
+
+<sc-if value="{{ detail.hasProblem }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FeedbackAlert" presentation="callout" tone="{{ detail.alertTone }}" showTitle="{{ false }}" description="{{ detail.humanError }}" dismiss="{{ false }}" action="{{ false }}" style="width:100%" hint-size="100%,60px"></x-import>
+<div onclick="{{ toggleTechDetails }}" style="cursor:pointer;font-size:12px;font-weight:600;color:var(--color-text-brand);align-self:flex-start">{{ techToggleLabel }}</div>
+<sc-if value="{{ isTechDetailsOpen }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--color-surface-subtle);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary);white-space:pre-wrap;width:100%;box-sizing:border-box">{{ detail.techError }}</div>
+</sc-if>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px">
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Status atual</div>{{ detail.statusEl2 }}</div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Última verificação</div><div style="font-size:13px;font-family:var(--font-mono);color:var(--color-text-primary)">{{ detail.lastChecked }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Última ocorrência</div><div style="font-size:13px;color:var(--color-text-primary)">{{ detail.lastOccurrence }}</div></div>
+<div><div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">Responsável</div><div style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="DesignSystem_25dd5c.IdentityAvatar" size="xs" initials="{{ detail.ownerInitials }}" hint-size="20px,20px"></x-import><span style="font-size:13px;color:var(--color-text-primary)">{{ detail.owner }}</span></div></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;color:var(--color-text-primary)">Sinais monitorados</span>
+<div style="display:flex;flex-direction:column;border-radius:10px;box-shadow:inset 0 0 0 1px var(--color-border-subtle);overflow:hidden">
+<sc-for list="{{ detail.signals }}" as="sig" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font-size:13px;background:var(--color-surface-card)">
+<span style="color:var(--color-text-secondary)">{{ sig.label }}</span>
+{{ sig.valueEl }}
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:700;color:var(--color-text-primary)">Histórico recente</span>
+<div style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ detail.history }}" as="h" hint-placeholder-count="4">
+<div style="display:flex;align-items:baseline;gap:10px;padding:6px 0;font-size:13px;box-shadow:0 -1px 0 var(--color-border-subtle) inset">
+<span style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-muted);flex-shrink:0;width:42px">{{ h.time }}</span>
+{{ h.labelEl }}
+<span style="color:var(--color-text-secondary)">{{ h.text }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Abrir produto" style2="secondary" size="default" onClick="{{ detail.openProduct }}" hint-size="130px,40px"></x-import>
+<sc-if value="{{ detail.hasPublication }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Ver publicação" style2="secondary" size="default" onClick="{{ detail.openPublication }}" hint-size="130px,40px"></x-import>
+</sc-if>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="{{ validateLabel }}" style2="primary" size="default" state="{{ validateState }}" onClick="{{ validateAgain }}" hint-size="140px,40px"></x-import>
+</div>
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Fechar" style2="secondary" onClick="{{ closeDetail }}" style="align-self:flex-end" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const STATUS_META = {
+  'saudavel': { label: 'Saudável', tone: 'positive', dot: 'var(--color-state-positive-solid,#1a9c5c)', color: 'var(--color-text-positive)' },
+  'atencao': { label: 'Atenção', tone: 'warning', dot: 'var(--color-state-warning-solid,#c8860a)', color: 'var(--color-text-warning)' },
+  'critico': { label: 'Crítico', tone: 'negative', dot: 'var(--color-state-negative-solid,#c0392b)', color: 'var(--color-text-negative)' },
+  'indisponivel': { label: 'Indisponível', tone: 'neutral', dot: 'var(--color-text-muted)', color: 'var(--color-text-muted)' },
+};
+const OWNERS = ['Ana Ferreira', 'Rafael Lima', 'Bruno Costa', 'Camila Nunes', 'Mariana Oliveira'];
+
+const PRODUCTS = [
+  { id: 'painel-de-clientes', name: 'Painel de Clientes', tipo: 'Power BI', status: 'critico', owner: 'Mariana Oliveira',
+    indicator: 'Integração indisponível', lastChecked: '26/08/2026 18:41', lastOccurrence: '26/08/2026 18:41 — falha ao carregar integração',
+    humanError: 'Não foi possível carregar o relatório Power BI.', techError: 'PowerBIEmbedError: code=EMBED_TOKEN_EXPIRED\nreportId=8a21-cf40\nretries=3\nlastAttempt=2026-08-26T18:41:02Z',
+    signals: [ { label: 'Relatório localizado', value: 'OK', ok: true }, { label: 'Integração disponível', value: 'Falha', ok: false }, { label: 'Incorporação carregando', value: 'Falha', ok: false }, { label: 'Última validação', value: '26/08 18:41', ok: null } ],
+    history: [ { time: '18:41', status: 'critico', text: 'Falha de carregamento Power BI' } ], hasPublication: true },
+  { id: 'claro-brasil', name: 'Claro Brasil', tipo: 'Projeto Nexo', status: 'saudavel', owner: 'Ana Ferreira',
+    indicator: 'Disponibilidade 99,98%', lastChecked: '26/08/2026 19:02', lastOccurrence: '—',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'OK', ok: true }, { label: 'Entrypoint acessível', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '640 ms', ok: null } ],
+    history: [ { time: '19:02', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+  { id: 'banco-de-horas', name: 'Banco de Horas', tipo: 'Projeto Nexo', status: 'saudavel', owner: 'Camila Nunes',
+    indicator: 'Disponibilidade 99,95%', lastChecked: '26/08/2026 18:55', lastOccurrence: '—',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'OK', ok: true }, { label: 'Entrypoint acessível', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '480 ms', ok: null } ],
+    history: [ { time: '18:55', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+  { id: 'governanca-de-dados', name: 'Governança de Dados', tipo: 'Projeto Nexo', status: 'atencao', owner: 'Camila Nunes',
+    indicator: 'Tempo de carregamento elevado', lastChecked: '26/08/2026 18:20', lastOccurrence: '26/08/2026 18:20 — carregamento acima do esperado',
+    humanError: 'O carregamento deste produto está mais lento que o normal.', techError: 'RuntimeWarning: entrypoint_load_ms=4200 threshold_ms=2000',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'Lento', ok: null }, { label: 'Entrypoint acessível', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '4,2 s', ok: false } ],
+    history: [ { time: '18:20', status: 'atencao', text: 'Tempo de carregamento acima do esperado' } ], hasPublication: true },
+  { id: 'indicadores-financeiros', name: 'Indicadores Financeiros', tipo: 'Power BI', status: 'saudavel', owner: 'Rafael Lima',
+    indicator: 'Incorporação carregando corretamente', lastChecked: '26/08/2026 18:47', lastOccurrence: '—',
+    signals: [ { label: 'Relatório localizado', value: 'OK', ok: true }, { label: 'Integração disponível', value: 'OK', ok: true }, { label: 'Incorporação carregando', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '1,1 s', ok: null } ],
+    history: [ { time: '18:47', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+  { id: 'monitor-de-sla', name: 'Monitor de SLA', tipo: 'Power BI', status: 'indisponivel', owner: 'Rafael Lima',
+    indicator: 'Integração indisponível', lastChecked: '26/08/2026 15:10', lastOccurrence: '26/08/2026 15:10 — integração fora do ar',
+    humanError: 'O relatório Power BI está indisponível no momento.', techError: 'PowerBIEmbedError: code=SERVICE_UNAVAILABLE\nreportId=6f10-aa21',
+    signals: [ { label: 'Relatório localizado', value: 'OK', ok: true }, { label: 'Integração disponível', value: 'Indisponível', ok: false }, { label: 'Incorporação carregando', value: '—', ok: null }, { label: 'Última validação', value: '26/08 15:10', ok: null } ],
+    history: [ { time: '15:10', status: 'indisponivel', text: 'Integração indisponível' } ], hasPublication: true },
+  { id: 'planejamento-orcamentario', name: 'Planejamento Orçamentário', tipo: 'Projeto Nexo', status: 'saudavel', owner: 'Bruno Costa',
+    indicator: 'Disponibilidade 99,99%', lastChecked: '26/08/2026 19:05', lastOccurrence: '—',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'OK', ok: true }, { label: 'Entrypoint acessível', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '510 ms', ok: null } ],
+    history: [ { time: '19:05', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+  { id: 'forecast-de-demanda', name: 'Forecast de Demanda', tipo: 'Projeto Nexo', status: 'atencao', owner: 'Bruno Costa',
+    indicator: 'Entrypoint lento', lastChecked: '26/08/2026 17:38', lastOccurrence: '26/08/2026 17:38 — entrypoint respondendo com lentidão',
+    humanError: 'Este produto está demorando mais que o normal para carregar.', techError: 'RuntimeWarning: entrypoint_response_ms=3800 threshold_ms=2000',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'OK', ok: true }, { label: 'Entrypoint acessível', value: 'Lento', ok: null }, { label: 'Tempo de carregamento', value: '3,8 s', ok: false } ],
+    history: [ { time: '17:38', status: 'atencao', text: 'Entrypoint respondendo com lentidão' } ], hasPublication: true },
+  { id: 'qualidade-de-dados', name: 'Qualidade de Dados', tipo: 'Power BI', status: 'saudavel', owner: 'Camila Nunes',
+    indicator: 'Incorporação carregando corretamente', lastChecked: '26/08/2026 18:12', lastOccurrence: '—',
+    signals: [ { label: 'Relatório localizado', value: 'OK', ok: true }, { label: 'Integração disponível', value: 'OK', ok: true }, { label: 'Incorporação carregando', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '900 ms', ok: null } ],
+    history: [ { time: '18:12', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+  { id: 'cadastro-de-fornecedores', name: 'Cadastro de Fornecedores', tipo: 'Projeto Nexo', status: 'saudavel', owner: 'Bruno Costa',
+    indicator: 'Disponibilidade 99,90%', lastChecked: '26/08/2026 18:58', lastOccurrence: '—',
+    signals: [ { label: 'Pacote atual disponível', value: 'OK', ok: true }, { label: 'Runtime carregando', value: 'OK', ok: true }, { label: 'Entrypoint acessível', value: 'OK', ok: true }, { label: 'Tempo de carregamento', value: '710 ms', ok: null } ],
+    history: [ { time: '18:58', status: 'saudavel', text: 'Verificação de rotina concluída' } ], hasPublication: true },
+];
+
+function initialsOf(name) { return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(); }
+function sigColor(ok) { return ok === true ? 'var(--color-text-positive)' : ok === false ? 'var(--color-text-negative)' : 'var(--color-text-secondary)'; }
+
+class Component extends DCLogic {
+  state = {
+    sidebarCollapsed: false,
+    filters: { status: [], product: [], contentType: [], owner: [] },
+    isMoreFiltersOpen: false,
+    detailId: null,
+    isTechDetailsOpen: false,
+    validating: false,
+  };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goProducts = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  goAcessos = () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; };
+  goPublicacoes = () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; };
+  goAuditoria = () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; };
+  goUtilizacao = () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  stopClick = (e) => e.stopPropagation();
+
+  onStatusChange = (v) => this.setState((s) => ({ filters: { ...s.filters, status: v } }));
+  onProductChange = (v) => this.setState((s) => ({ filters: { ...s.filters, product: v } }));
+  onContentTypeChange = (v) => this.setState((s) => ({ filters: { ...s.filters, contentType: v } }));
+  onOwnerChange = (v) => this.setState((s) => ({ filters: { ...s.filters, owner: v } }));
+  toggleMoreFilters = () => this.setState((s) => ({ isMoreFiltersOpen: !s.isMoreFiltersOpen }));
+  clearFilters = () => this.setState({ filters: { status: [], product: [], contentType: [], owner: [] } });
+
+  openDetail = (row) => this.setState({ detailId: row.id, isTechDetailsOpen: false });
+  closeDetail = () => this.setState({ detailId: null });
+  rowKey = (r) => r.id;
+  toggleTechDetails = () => this.setState((s) => ({ isTechDetailsOpen: !s.isTechDetailsOpen }));
+
+  openProductPage = () => { window.location.href = '../detalhe-produto/DetalheProduto.dc.html'; };
+  openPublicationPage = () => { window.location.href = '../admin-publicacoes-detalhe/AdminPublicacaoDetalhe.dc.html'; };
+  validateAgain = () => {
+    if (this.state.validating) return;
+    this.setState({ validating: true });
+    setTimeout(() => this.setState({ validating: false }), 1400);
+  };
+
+  filteredProducts() {
+    const f = this.state.filters;
+    return PRODUCTS.filter((p) => {
+      if (f.status.length && !f.status.includes(STATUS_META[p.status].label)) return false;
+      if (f.product.length && !f.product.includes(p.name)) return false;
+      if (f.contentType.length && !f.contentType.includes(p.tipo)) return false;
+      if (f.owner.length && !f.owner.includes(p.owner)) return false;
+      return true;
+    });
+  }
+
+  statusCell(status) {
+    const m = STATUS_META[status];
+    return React.createElement('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: m.color, fontWeight: 600 } },
+      React.createElement('span', { style: { width: 7, height: 7, borderRadius: '50%', background: m.dot, display: 'inline-block' } }), m.label);
+  }
+
+  renderVals() {
+    const ns = this.ns();
+    const f = this.state.filters;
+    const filtered = this.filteredProducts();
+
+    const columns = [
+      { key: 'name', header: 'Produto', minWidth: 200 },
+      { key: 'tipo', header: 'Tipo', muted: true, minWidth: 120 },
+      { key: 'status', header: 'Status', render: (r) => this.statusCell(r.status), minWidth: 130 },
+      { key: 'indicator', header: 'Indicador principal', minWidth: 220 },
+      { key: 'lastChecked', header: 'Última verificação', mono: true, minWidth: 150 },
+      { key: 'owner', header: 'Responsável', minWidth: 150 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (r) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Ver detalhe', onClick: () => this.openDetail(r) },
+        { label: 'Abrir produto', onClick: () => this.openProductPage() },
+        ...(r.hasPublication ? [{ label: 'Ver publicação', onClick: () => this.openPublicationPage() }] : []),
+        { label: 'Validar novamente', onClick: () => this.validateAgain() },
+      ] }) },
+    ];
+
+    const attentionProducts = filtered.filter((p) => p.status !== 'saudavel');
+    const attentionColumns = [
+      { key: 'name', header: 'Produto', minWidth: 200 },
+      { key: 'tipo', header: 'Tipo', muted: true, minWidth: 120 },
+      { key: 'humanError', header: 'Problema', minWidth: 240, render: (r) => r.humanError || r.indicator },
+      { key: 'status', header: 'Status', render: (r) => this.statusCell(r.status), minWidth: 130 },
+      { key: 'lastChecked', header: 'Última verificação', mono: true, minWidth: 150 },
+      { key: 'owner', header: 'Responsável', minWidth: 150 },
+      { key: 'actions', header: 'Ações', align: 'right', minWidth: 60, lockWidth: true, render: (r) => React.createElement(ns.ActionOverflowMenu, { items: [
+        { label: 'Ver detalhe', onClick: () => this.openDetail(r) },
+        { label: 'Validar novamente', onClick: () => this.validateAgain() },
+      ] }) },
+    ];
+
+    const activeFilterChips = [
+      ...f.status.map((v) => ({ label: 'Status', value: v, onRemove: () => this.onStatusChange(f.status.filter((x) => x !== v)) })),
+      ...f.product.map((v) => ({ label: 'Produto', value: v, onRemove: () => this.onProductChange(f.product.filter((x) => x !== v)) })),
+      ...f.contentType.map((v) => ({ label: 'Tipo de conteúdo', value: v, onRemove: () => this.onContentTypeChange(f.contentType.filter((x) => x !== v)) })),
+      ...f.owner.map((v) => ({ label: 'Responsável', value: v, onRemove: () => this.onOwnerChange(f.owner.filter((x) => x !== v)) })),
+    ];
+    const hasActiveFilters = activeFilterChips.length > 0;
+
+    const counts = { saudavel: 0, atencao: 0, critico: 0, indisponivel: 0 };
+    PRODUCTS.forEach((p) => counts[p.status]++);
+
+    const detailId = this.state.detailId;
+    let detail = {};
+    if (detailId) {
+      const p = PRODUCTS.find((x) => x.id === detailId) || {};
+      const hasProblem = p.status !== 'saudavel';
+      detail = {
+        name: p.name, contentType: p.tipo,
+        statusEl: this.statusCell(p.status), statusEl2: this.statusCell(p.status),
+        lastChecked: p.lastChecked, lastOccurrence: p.lastOccurrence || '—',
+        owner: p.owner, ownerInitials: initialsOf(p.owner),
+        hasProblem, humanError: p.humanError, techError: p.techError, alertTone: p.status === 'critico' || p.status === 'indisponivel' ? 'error' : 'warning',
+        signals: (p.signals || []).map((s) => ({ label: s.label, valueEl: React.createElement('span', { style: { fontSize: 12, fontWeight: 600, color: sigColor(s.ok) } }, s.value) })),
+        history: (p.history || []).map((h) => ({ time: h.time, labelEl: React.createElement('span', { style: { fontSize: 11, fontWeight: 700, flexShrink: 0, color: STATUS_META[h.status].color } }, STATUS_META[h.status].label), text: h.text })),
+        hasPublication: !!p.hasPublication, openProduct: this.openProductPage, openPublication: this.openPublicationPage,
+      };
+    }
+
+    const portalStatus = 'saudavel';
+    const portal = {
+      dotEl: React.createElement('span', { style: { width: 9, height: 9, borderRadius: '50%', background: STATUS_META[portalStatus].dot, display: 'inline-block', flexShrink: 0 } }),
+      statusEl: this.statusCell(portalStatus),
+      lastChecked: '26/08/2026 19:06', responseTime: '182 ms',
+    };
+
+    return {
+      kpis: [
+        { label: 'Saudáveis', value: String(counts.saudavel), secondary: 'de ' + PRODUCTS.length + ' monitorados', tone: 'positive' },
+        { label: 'Em atenção', value: String(counts.atencao), secondary: 'requer acompanhamento', tone: 'warning' },
+        { label: 'Críticos', value: String(counts.critico), secondary: 'falha confirmada', tone: 'negative' },
+        { label: 'Indisponíveis', value: String(counts.indisponivel), secondary: 'fora do ar', tone: 'neutral' },
+      ],
+      portal,
+      filters: f,
+      statusOptions: Object.values(STATUS_META).map((m) => m.label),
+      productOptions: PRODUCTS.map((p) => p.name),
+      contentTypeOptions: ['Power BI', 'Projeto Nexo'], ownerOptions: OWNERS,
+      onStatusChange: this.onStatusChange, onProductChange: this.onProductChange,
+      onContentTypeChange: this.onContentTypeChange, onOwnerChange: this.onOwnerChange,
+      isMoreFiltersOpen: this.state.isMoreFiltersOpen, toggleMoreFilters: this.toggleMoreFilters,
+      activeFilterChips, hasActiveFilters, clearFilters: this.clearFilters,
+
+      columns, pageRows: filtered, rowKey: this.rowKey, openDetail: this.openDetail,
+      hasAnyData: filtered.length > 0,
+      attentionColumns, attentionRows: attentionProducts, hasAttention: attentionProducts.length > 0,
+
+      isDetailOpen: !!detailId, detail, closeDetail: this.closeDetail, stopClick: this.stopClick,
+      isTechDetailsOpen: this.state.isTechDetailsOpen, toggleTechDetails: this.toggleTechDetails,
+      techToggleLabel: this.state.isTechDetailsOpen ? 'Ocultar detalhes técnicos' : 'Ver detalhes técnicos',
+      validateLabel: this.state.validating ? 'Validando...' : 'Validar novamente',
+      validateState: this.state.validating ? 'loading' : 'default',
+      validateAgain: this.validateAgain,
+
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      noop: this.noop,
+      sidebarCollapsed: this.state.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: this.state.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        this.state.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: this.goProducts },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: this.goAcessos },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: this.goPublicacoes },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: this.goAuditoria },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: this.goUtilizacao },
+        { label: 'Saúde', icon: this.icon('IconDataState'), active: true },
+        { label: 'Comunicados', icon: this.icon('IconBell'), onClick: () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; } },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

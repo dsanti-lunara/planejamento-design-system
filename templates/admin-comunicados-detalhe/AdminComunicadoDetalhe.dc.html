@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Admin · Detalhe do comunicado" description="Rota /admin/comunicados/:noticeId — dados completos, ações Editar/Encerrar/Duplicar. Encerrar exige confirmação, altera Status para Encerrado e registra Auditoria." -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:var(--font-sans);box-sizing:border-box">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:var(--font-sans);font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;width:100%;max-width:100%;height:100%;overflow:hidden;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="admin" search="{{ true }}" onSearchClick="{{ noop }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+
+<div style="display:flex;flex-direction:column;gap:20px;padding:28px;align-items:stretch;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%;max-width:100%;overflow-y:auto;overflow-x:hidden;min-width:0">
+
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" items="{{ crumbs }}" style="width:auto;max-width:100%" hint-size="300px,24px"></x-import>
+
+<sc-if value="{{ isHeaderNeutral }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;width:100%;background:var(--color-surface-card);border-radius:16px;padding:20px 24px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h1 style="margin:0;font-family:var(--font-sans);font-size:20px;font-weight:700;color:var(--color-text-primary)">{{ n.title }}</h1>
+{{ typeBadgeEl }}
+{{ statusBadgeEl }}
+</div>
+<span style="font-family:var(--font-sans);font-size:13px;color:var(--color-text-secondary)">Criado por {{ n.createdBy }} em {{ n.createdAt }} · Atualizado por {{ n.updatedBy }} em {{ n.updatedAt }}</span>
+</div>
+<div style="display:flex;gap:8px;flex-shrink:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Duplicar" style2="secondary" onClick="{{ handleDuplicate }}" hint-size="100px,40px"></x-import>
+<sc-if value="{{ canEncerrar }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Encerrar" style2="destructive" onClick="{{ openEncerrarConfirm }}" hint-size="100px,40px"></x-import>
+</sc-if>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Editar" style2="primary" onClick="{{ handleEditar }}" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ isHeaderBold }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;width:100%;background:var(--color-surface-brand);border-radius:16px;padding:28px 28px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h1 style="margin:0;font-family:var(--font-sans);font-size:26px;font-weight:700;color:var(--color-text-inverse)">{{ n.title }}</h1>
+{{ typeBadgeEl }}
+{{ statusBadgeEl }}
+</div>
+<span style="font-family:var(--font-sans);font-size:13px;color:var(--color-text-inverse);opacity:0.75">Criado por {{ n.createdBy }} em {{ n.createdAt }} · Atualizado por {{ n.updatedBy }} em {{ n.updatedAt }}</span>
+</div>
+<div style="display:flex;gap:8px;flex-shrink:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Duplicar" style2="secondary" onClick="{{ handleDuplicate }}" hint-size="100px,40px"></x-import>
+<sc-if value="{{ canEncerrar }}" hint-placeholder-val="{{ true }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Encerrar" style2="destructive" onClick="{{ openEncerrarConfirm }}" hint-size="100px,40px"></x-import>
+</sc-if>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Editar" style2="primary" onClick="{{ handleEditar }}" hint-size="90px,40px"></x-import>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLayoutSplit }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;width:100%;align-items:start">
+
+<div style="display:flex;flex-direction:column;gap:6px;width:100%;background:var(--color-surface-card);border-radius:14px;padding:16px 20px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);min-width:0">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Detalhes</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Mensagem" value="{{ n.message }}" orientation="horizontal" hint-size="100%,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Tipo" value="{{ n.type }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Público" value="{{ audienceLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Vigência" value="{{ vigenciaLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Exibir na Home" value="{{ showOnHomeLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Status" value="{{ n.status }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+
+<h2 style="margin:16px 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Auditoria</h2>
+<sc-if value="{{ isAuditTimeline }}" hint-placeholder-val="{{ true }}">
+<ol style="display:flex;flex-direction:column;width:100%;margin:0;padding:0;list-style:none">
+<sc-for list="{{ auditLog }}" as="a" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DeploymentTimelineItem" title="{{ a.title }}" state="{{ a.state }}" connector="{{ a.connector }}" timestamp="{{ a.timestamp }}" description="{{ a.description }}" progressCTA="{{ false }}" hint-size="100%,72px"></x-import>
+</sc-for>
+</ol>
+</sc-if>
+<sc-if value="{{ isAuditCompact }}" hint-placeholder-val="{{ false }}">
+<ol style="display:flex;flex-direction:column;gap:4px;width:100%;margin:0;padding:0;list-style:none">
+<sc-for list="{{ auditLog }}" as="a" hint-placeholder-count="3">
+<li style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border-subtle);font-family:var(--font-sans);font-size:13px">
+<span style="color:var(--color-text-muted);font-family:var(--font-mono);font-size:11px;flex-shrink:0;width:110px">{{ a.timestamp }}</span>
+<span style="color:var(--color-text-primary);font-weight:600;flex-shrink:0">{{ a.title }}</span>
+<span style="color:var(--color-text-secondary)">{{ a.description }}</span>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<span style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.02em;color:var(--color-text-muted);text-transform:uppercase">Como aparece na Home</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeAnnouncementItem" title="{{ n.title }}" type="{{ previewType }}" description="{{ n.message }}" showDate="{{ true }}" date="{{ previewDate }}" showCTA="{{ false }}" style="width:100%" hint-size="100%,112px"></x-import>
+</div>
+
+</div>
+</sc-if>
+<sc-if value="{{ isLayoutSpotlight }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;width:100%;background:var(--color-surface-subtle);border-radius:14px;padding:20px;box-sizing:border-box">
+<span style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.02em;color:var(--color-text-muted);text-transform:uppercase">Como aparece na Home</span>
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeAnnouncementItem" title="{{ n.title }}" type="{{ previewType }}" description="{{ n.message }}" showDate="{{ true }}" date="{{ previewDate }}" showCTA="{{ false }}" style="width:100%;max-width:640px;margin:0 auto" hint-size="100%,140px"></x-import>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;width:100%;align-items:start">
+<div style="display:flex;flex-direction:column;gap:6px;width:100%;background:var(--color-surface-card);border-radius:14px;padding:16px 20px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);min-width:0">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Detalhes</h2>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Mensagem" value="{{ n.message }}" orientation="horizontal" hint-size="100%,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Tipo" value="{{ n.type }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Público" value="{{ audienceLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Vigência" value="{{ vigenciaLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Exibir na Home" value="{{ showOnHomeLabel }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.DataKeyValueList" label="Status" value="{{ n.status }}" orientation="horizontal" hint-size="100%,32px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;width:100%;background:var(--color-surface-card);border-radius:14px;padding:16px 20px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);min-width:0">
+<h2 style="margin:0 0 4px;font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--color-text-primary)">Auditoria</h2>
+<sc-if value="{{ isAuditTimeline }}" hint-placeholder-val="{{ true }}">
+<ol style="display:flex;flex-direction:column;width:100%;margin:0;padding:0;list-style:none">
+<sc-for list="{{ auditLog }}" as="a" hint-placeholder-count="3">
+<x-import component-from-global-scope="DesignSystem_25dd5c.DeploymentTimelineItem" title="{{ a.title }}" state="{{ a.state }}" connector="{{ a.connector }}" timestamp="{{ a.timestamp }}" description="{{ a.description }}" progressCTA="{{ false }}" hint-size="100%,72px"></x-import>
+</sc-for>
+</ol>
+</sc-if>
+<sc-if value="{{ isAuditCompact }}" hint-placeholder-val="{{ false }}">
+<ol style="display:flex;flex-direction:column;gap:4px;width:100%;margin:0;padding:0;list-style:none">
+<sc-for list="{{ auditLog }}" as="a" hint-placeholder-count="3">
+<li style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border-subtle);font-family:var(--font-sans);font-size:13px">
+<span style="color:var(--color-text-muted);font-family:var(--font-mono);font-size:11px;flex-shrink:0;width:110px">{{ a.timestamp }}</span>
+<span style="color:var(--color-text-primary);font-weight:600;flex-shrink:0">{{ a.title }}</span>
+<span style="color:var(--color-text-secondary)">{{ a.description }}</span>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isEncerrarConfirmOpen }}" hint-placeholder-val="{{ false }}">
+<div onclick="{{ closeEncerrarConfirm }}" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--color-surface-overlay);padding:24px;box-sizing:border-box">
+<div onclick="{{ stopClick }}" style="width:460px;max-width:100%;background:var(--color-surface-raised);border-radius:14px;box-shadow:var(--shadow-overlay);padding:24px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;font-family:var(--font-sans)">
+<h2 style="margin:0;font-size:18px;font-weight:700;color:var(--color-text-primary)">Encerrar comunicado?</h2>
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--color-text-secondary)">O comunicado deixará de ser exibido aos usuários. O histórico é mantido e a ação será registrada na Auditoria.</p>
+<div style="display:flex;gap:8px;justify-content:flex-end">
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Cancelar" style2="secondary" onClick="{{ closeEncerrarConfirm }}" hint-size="100px,40px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Encerrar comunicado" style2="destructive" onClick="{{ confirmEncerrar }}" hint-size="180px,40px"></x-import>
+</div>
+</div>
+</div>
+</sc-if>
+
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;layoutMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;split&quot;,&quot;options&quot;:[&quot;split&quot;,&quot;spotlight&quot;],&quot;tsType&quot;:&quot;'split'|'spotlight'&quot;,&quot;section&quot;:&quot;Tweaks&quot;},&quot;headerEmphasis&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;neutral&quot;,&quot;options&quot;:[&quot;neutral&quot;,&quot;tinted&quot;],&quot;tsType&quot;:&quot;'neutral'|'tinted'&quot;,&quot;section&quot;:&quot;Tweaks&quot;},&quot;auditStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;timeline&quot;,&quot;options&quot;:[&quot;timeline&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'timeline'|'compact'&quot;,&quot;section&quot;:&quot;Tweaks&quot;}}">
+const NOTICES = {
+  'painel-clientes-v2': { title: 'Nova versão do Painel de Clientes', message: 'O Painel de Clientes recebeu melhorias de navegação e novos indicadores.', type: 'Novidade', audienceMode: 'produtos', products: ['Painel de Clientes'], startDate: '2026-08-24', startTime: '09:00', endDate: '2026-09-07', endTime: '18:00', noEndDate: false, showOnHome: true, status: 'Ativo', createdBy: 'Ana Ferreira', createdAt: '24/08/2026 09:00', updatedBy: 'Ana Ferreira', updatedAt: '24/08/2026 09:10' },
+  'manutencao-nexo': { title: 'Manutenção programada do Nexo', message: 'O Nexo ficará indisponível para manutenção programada.', type: 'Manutenção', audienceMode: 'todos', startDate: '2026-08-30', startTime: '22:00', endDate: '2026-08-31', endTime: '02:00', noEndDate: false, showOnHome: true, status: 'Agendado', createdBy: 'Bruno Costa', createdAt: '25/08/2026 16:30', updatedBy: 'Bruno Costa', updatedAt: '25/08/2026 16:40' },
+  'nova-categoria-dados': { title: 'Nova categoria Dados & Inteligência', message: 'Produtos de dados e inteligência agora estão organizados em uma nova categoria.', type: 'Informação', audienceMode: 'categorias', categories: ['Dados & Inteligência'], startDate: '2026-08-20', startTime: '08:00', endDate: '2026-08-27', endTime: '18:00', noEndDate: false, showOnHome: true, status: 'Ativo', createdBy: 'Camila Nunes', createdAt: '20/08/2026 10:50', updatedBy: 'Camila Nunes', updatedAt: '20/08/2026 11:05' },
+  'atualizacao-banco-horas': { title: 'Atualização do Banco de Horas', message: 'Nova versão do Banco de Horas publicada com correções.', type: 'Novidade', audienceMode: 'produtos', products: ['Banco de Horas'], startDate: '2026-08-10', startTime: '08:00', endDate: '2026-08-17', endTime: '18:00', noEndDate: false, showOnHome: true, status: 'Encerrado', createdBy: 'Diego Prado', createdAt: '10/08/2026 07:50', updatedBy: 'Diego Prado', updatedAt: '17/08/2026 08:00' },
+  'rascunho-financeiro': { title: 'Ajuste no Painel Financeiro', message: 'Ajustes de layout no Painel Financeiro.', type: 'Informação', audienceMode: 'produtos', products: ['Painel Financeiro'], startDate: '', startTime: '', endDate: '', endTime: '', noEndDate: true, showOnHome: true, status: 'Rascunho', createdBy: 'Ana Ferreira', createdAt: '26/08/2026 08:20', updatedBy: 'Ana Ferreira', updatedAt: '26/08/2026 08:30' },
+};
+const STATUS_TONE = { 'Ativo': 'positive', 'Agendado': 'info', 'Encerrado': 'neutral', 'Rascunho': 'warning' };
+const TYPE_TONE = { 'Informação': 'info', 'Novidade': 'positive', 'Manutenção': 'warning' };
+const TYPE_TO_PREVIEW = { 'Informação': 'info', 'Novidade': 'release', 'Manutenção': 'maintenance' };
+
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false, encerrarConfirmOpen: false, encerrado: false };
+
+  ns() { return window.DesignSystem_25dd5c || {}; }
+  icon(name) { const Cmp = this.ns()[name]; return Cmp ? React.createElement(Cmp) : null; }
+  noop = () => {};
+  query(key) { try { return new URLSearchParams(window.location.search).get(key); } catch (e) { return null; } }
+  goHome = () => { window.location.href = '../portal-home/PortalHome.dc.html'; };
+  goList = () => { window.location.href = '../admin-comunicados/AdminComunicados.dc.html'; };
+  toggleSidebarCollapsed = () => this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+  stopClick = (e) => e.stopPropagation();
+
+  getId() { return this.query('noticeId') || 'painel-clientes-v2'; }
+  getNotice() { return NOTICES[this.getId()] || NOTICES['painel-clientes-v2']; }
+
+  handleEditar = () => { window.location.href = '../admin-comunicados-novo/AdminComunicadoNovo.dc.html?mode=editar&noticeId=' + encodeURIComponent(this.getId()); };
+  handleDuplicate = () => { window.location.href = '../admin-comunicados-novo/AdminComunicadoNovo.dc.html'; };
+  openEncerrarConfirm = () => this.setState({ encerrarConfirmOpen: true });
+  closeEncerrarConfirm = () => this.setState({ encerrarConfirmOpen: false });
+  confirmEncerrar = () => this.setState({ encerrarConfirmOpen: false, encerrado: true });
+
+  renderVals() {
+    const ns = this.ns();
+    const s = this.state;
+    const n0 = this.getNotice();
+    const status = s.encerrado ? 'Encerrado' : n0.status;
+    const n = { ...n0, status };
+
+    const audienceLabel = n.audienceMode === 'todos' ? 'Todos os usuários'
+      : n.audienceMode === 'categorias' ? 'Categorias: ' + (n.categories || []).join(', ')
+      : 'Produtos: ' + (n.products || []).join(', ');
+    const vigenciaLabel = (n.startDate ? n.startDate.split('-').reverse().join('/') + (n.startTime ? ' ' + n.startTime : '') : '—')
+      + ' até ' + (n.noEndDate ? 'encerramento manual' : (n.endDate ? n.endDate.split('-').reverse().join('/') + (n.endTime ? ' ' + n.endTime : '') : '—'));
+
+    const auditLog = [
+      { title: 'Comunicado criado', state: 'completed', timestamp: n.createdAt, description: 'Criado por ' + n.createdBy + '.', connector: true },
+      ...(n.updatedAt !== n.createdAt ? [{ title: 'Comunicado editado', state: 'completed', timestamp: n.updatedAt, description: 'Editado por ' + n.updatedBy + '.', connector: s.encerrado }] : []),
+      ...(s.encerrado ? [{ title: 'Comunicado encerrado', state: 'completed', timestamp: '26/08/2026 12:00', description: 'Encerrado por Ana Ferreira.', connector: false }] : []),
+    ];
+
+    return {
+      n,
+      typeBadgeEl: React.createElement(ns.StatusBadge, { label: n.type, tone: TYPE_TONE[n.type] || 'neutral' }),
+      statusBadgeEl: React.createElement(ns.StatusBadge, { label: status, tone: STATUS_TONE[status] || 'neutral' }),
+      audienceLabel, vigenciaLabel,
+      showOnHomeLabel: n.showOnHome ? 'Sim' : 'Não',
+      previewType: TYPE_TO_PREVIEW[n.type] || 'info',
+      previewDate: n.startDate ? (n.startDate.split('-').reverse().join('/') + (n.startTime ? ', ' + n.startTime : '')) : 'Data a definir',
+
+      isHeaderNeutral: (this.props.headerEmphasis ?? 'neutral') === 'neutral',
+      isHeaderBold: (this.props.headerEmphasis ?? 'neutral') === 'tinted',
+      isLayoutSplit: (this.props.layoutMode ?? 'split') === 'split',
+      isLayoutSpotlight: (this.props.layoutMode ?? 'split') === 'spotlight',
+      isAuditTimeline: (this.props.auditStyle ?? 'timeline') === 'timeline',
+      isAuditCompact: (this.props.auditStyle ?? 'timeline') === 'compact',
+
+      canEncerrar: status !== 'Encerrado',
+      handleEditar: this.handleEditar, handleDuplicate: this.handleDuplicate,
+      isEncerrarConfirmOpen: s.encerrarConfirmOpen, openEncerrarConfirm: this.openEncerrarConfirm, closeEncerrarConfirm: this.closeEncerrarConfirm, confirmEncerrar: this.confirmEncerrar, stopClick: this.stopClick,
+
+      auditLog,
+
+      crumbs: [
+        { label: 'Comunicados', onClick: this.goList },
+        { label: n.title, current: true },
+      ],
+      noop: this.noop,
+      topbarUser: { name: 'Ana Ferreira', role: 'Administrador · Planejamento Analytics' },
+      sidebarCollapsed: s.sidebarCollapsed, toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: s.sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: React.createElement('span', { onClick: this.goHome, style: { cursor: 'pointer', display: 'contents' } },
+        s.sidebarCollapsed
+          ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } })
+          : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } })),
+      sidebarItems: [
+        { label: 'Voltar ao Nexo', icon: this.icon('IconChevronLeft'), onClick: this.goHome },
+        { section: 'ADMINISTRAÇÃO', divider: true },
+        { label: 'Produtos', icon: this.icon('IconNavStructure'), onClick: () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; } },
+        { label: 'Acessos', icon: this.icon('IconNavGovernance'), onClick: () => { window.location.href = '../admin-acessos/AdminAcessos.dc.html'; } },
+        { label: 'Publicações', icon: this.icon('IconCalendar'), onClick: () => { window.location.href = '../admin-publicacoes/AdminPublicacoes.dc.html'; } },
+        { label: 'Auditoria', icon: this.icon('IconNavGlossary'), onClick: () => { window.location.href = '../admin-auditoria/AdminAuditoria.dc.html'; } },
+        { label: 'Utilização', icon: this.icon('IconNavCapacity'), onClick: () => { window.location.href = '../admin-utilizacao/AdminUtilizacao.dc.html'; } },
+        { label: 'Saúde', icon: this.icon('IconDataState'), onClick: () => { window.location.href = '../admin-saude/AdminSaude.dc.html'; } },
+        { label: 'Comunicados', icon: this.icon('IconBell'), active: true, onClick: this.goList },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

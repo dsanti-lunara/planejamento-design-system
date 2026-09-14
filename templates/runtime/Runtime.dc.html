@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Runtime do Produto" description="Shell mínimo de execução /r/:productId/* — barra fina do Nexo + produto embutido em tela cheia, com estados de sistema." -->
+<helmet><script src="./ds-base.js"></script><style>html,body{margin:0;padding:0;height:100%;overflow:hidden}#root{height:100%}</style></helmet>
+<x-import component-from-global-scope="DesignSystem_25dd5c.RuntimeShell" header="{{ false }}" banner="{{ false }}" dc-props="{{ shellProps }}" style="width:100%;height:100dvh;overflow:hidden" hint-size="100%,100dvh">
+<div style="position:relative;align-self:stretch;flex-shrink:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.RuntimeHeader" productContext="{{ false }}" text2="←  Voltar ao Nexo" dc-props="{{ headerProps }}" style="width:100%;height:46px" hint-size="100%,46px"></x-import>
+<button type="button" onClick="{{ onBackToNexo }}" aria-label="Voltar ao Nexo" title="Voltar ao Nexo" style="position:absolute;left:0;top:0;bottom:0;width:230px;border:0;background:transparent;font:var(--text-panel-title);color:transparent;cursor:pointer;padding:0"></button>
+</div>
+<sc-if value="{{ showBanner }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.FeedbackSystemBanner" message="{{ bannerMessage }}" cTA="Ver produto substituto" tone="deprecated" dismiss="{{ true }}" dc-props="{{ bannerProps }}" style="align-self:stretch;flex-shrink:0" hint-size="100%,44px"></x-import>
+</sc-if>
+<sc-if value="{{ useBareEmbed }}" hint-placeholder-val="{{ true }}">
+<iframe src="{{ embedSrc }}" title="Produto embutido" style="flex:1;min-width:0;min-height:0;width:100%;height:100%;align-self:stretch;border:0;display:block"></iframe>
+</sc-if>
+<sc-if value="{{ useStateFrame }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.RuntimeReportEmbedFrame" state="{{ embedState }}" text1="{{ productSurfaceLabel }}" supportingInfo="{{ maintenanceWindow }}" onPrimaryAction="{{ onBackToNexo }}" onSecondaryAction="{{ onPrimary }}" dc-props="{{ frameProps }}" style="flex:1;min-width:0;min-height:0;width:100%;align-self:stretch;display:flex" hint-size="100%,100%"></x-import>
+</sc-if>
+<sc-if value="{{ useFullPage }}" hint-placeholder-val="{{ false }}">
+<x-import component-from-global-scope="DesignSystem_25dd5c.StateFullPage" type="{{ fpType }}" title="{{ fpTitle }}" description="{{ fpDescription }}" eyebrow="{{ fpEyebrow }}" eyebrowVisible="{{ true }}" code="{{ fpCode }}" codeVisible="{{ fpCodeVisible }}" supportingInfo="{{ fpSupporting }}" supportingInfoVisible="{{ true }}" technicalInfo="{{ fpTechnical }}" technicalInfoVisible="{{ fpTechnicalVisible }}" onToggleTechnicalInfo="{{ fpTechToggle }}" primaryAction="{{ fpPrimary }}" primaryActionLabel="{{ fpPrimaryLabel }}" secondaryAction="{{ fpSecondaryVisible }}" onPrimaryAction="{{ fpOnPrimary }}" onSecondaryAction="{{ fpOnSecondary }}" dc-props="{{ fullPageProps }}" style="flex:1;min-width:0;min-height:0;width:100%;align-self:stretch;display:flex" hint-size="100%,100%"></x-import>
+</sc-if>
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;maintenance&quot;,&quot;deprecated&quot;,&quot;restricted&quot;,&quot;error&quot;,&quot;archived&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;\&quot;normal\&quot; | \&quot;loading\&quot; | \&quot;maintenance\&quot; | \&quot;deprecated\&quot; | \&quot;restricted\&quot; | \&quot;error\&quot; | \&quot;archived\&quot;&quot;,&quot;section&quot;:&quot;Estado do runtime&quot;},&quot;errorScope&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;produto&quot;,&quot;nexo&quot;],&quot;default&quot;:&quot;produto&quot;,&quot;tsType&quot;:&quot;\&quot;produto\&quot; | \&quot;nexo\&quot;&quot;,&quot;section&quot;:&quot;Estado do runtime&quot;},&quot;deprecatedExecutionAllowed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Estado do runtime&quot;},&quot;productId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;claro-brasil&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Produto&quot;},&quot;initialPath&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;visao-geral&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Produto&quot;},&quot;contentTypeOverride&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;power-bi&quot;,&quot;nexo-project&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;\&quot;\&quot; | \&quot;power-bi\&quot; | \&quot;nexo-project\&quot;&quot;,&quot;section&quot;:&quot;Produto&quot;}}">
+// Publicação persistida por produto — o que o Admin/Publicações grava ao publicar.
+// contentType decide qual integração de execução o runtime aciona; os identificadores
+// técnicos de cada integração (workspace/report/defaultPage, ou pacote/versão) nunca
+// aparecem no header — pertencem apenas à camada de montagem do conteúdo.
+const PRODUCT_PUBLICATIONS = {
+  'claro-brasil': { contentType: 'nexo-project', nexoProject: { package: 'claro-brasil-report', version: 'v1.4.0' } },
+  'sentinel': { contentType: 'nexo-project', nexoProject: { package: 'sentinel-report', version: 'v1.0.0' } },
+  'banco-de-horas': { contentType: 'nexo-project', nexoProject: { package: 'banco-de-horas-report', version: 'v1.0.3' } },
+  'planejamento-orcamentario': { contentType: 'nexo-project', nexoProject: { package: 'planejamento-orcamentario-report', version: 'v1.0.0' } },
+  'forecast-de-demanda': { contentType: 'nexo-project', nexoProject: { package: 'forecast-de-demanda-report', version: 'v0.9.0' } },
+  'auditoria-legada': { contentType: 'nexo-project', nexoProject: { package: 'auditoria-legada-report', version: 'v1.2.0' } },
+  'painel-de-clientes-360-legado': { contentType: 'nexo-project', nexoProject: { package: 'painel-clientes-360-report', version: 'v2.1.0' } },
+  'painel-de-clientes': { contentType: 'power-bi', powerBI: { workspace: 'Planejamento Analytics', report: 'Painel de Clientes', defaultPage: 'Visão Geral' } },
+  'qualidade-de-dados': { contentType: 'power-bi', powerBI: { workspace: 'Planejamento Analytics', report: 'Qualidade de Dados', defaultPage: 'Visão Geral' } },
+  'indicadores-financeiros': { contentType: 'power-bi', powerBI: { workspace: 'Planejamento Analytics', report: 'Indicadores Financeiros', defaultPage: 'Visão Geral' } },
+};
+function getPublication(productId) {
+  return PRODUCT_PUBLICATIONS[productId] || { contentType: 'nexo-project', nexoProject: { package: productId + '-report', version: 'v1.0.0' } };
+}
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.parseHash();
+    this.state = { productId: r.productId, path: r.path, syncs: 0 };
+    this.onPop = this.onPop.bind(this);
+    this.onSdkMessage = this.onSdkMessage.bind(this);
+    this.state.techOpen = false;
+  }
+  // /r/:productId e /r/:productId/* — o shell resolve apenas productId + rota bruta;
+  // a interpretação da rota interna pertence ao produto.
+  parseHash() {
+    const h = (typeof location !== "undefined" ? location.hash : "").replace(/^#/, "");
+    const m = h.match(/^\/r\/([^/?#]+)(?:\/(.*))?$/);
+    if (m) return { productId: m[1], path: m[2] || "" };
+    return { productId: this.props.productId ?? "claro-brasil", path: this.props.initialPath ?? "" };
+  }
+  componentDidMount() {
+    const { productId, path } = this.state;
+    const canonical = "#/r/" + productId + (path ? "/" + path : "");
+    if (location.hash !== canonical) history.replaceState({ r: path }, "", canonical);
+    window.addEventListener("popstate", this.onPop);
+    window.addEventListener("hashchange", this.onPop);
+    window.addEventListener("message", this.onSdkMessage);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("popstate", this.onPop);
+    window.removeEventListener("hashchange", this.onPop);
+    window.removeEventListener("message", this.onSdkMessage);
+  }
+  // Back/Forward do navegador e deep link direto: re-sincroniza a rota com o produto.
+  onPop() {
+    const r = this.parseHash();
+    if (r.path === this.state.path && r.productId === this.state.productId) return;
+    this.setState({ productId: r.productId, path: r.path, syncs: this.state.syncs + 1 });
+  }
+  // Report SDK -> host: navegação interna do produto atualiza a rota do Nexo,
+  // sem que o shell renderize qualquer navegação. Aplica-se apenas ao Projeto
+  // Nexo — no Power BI Embedded a navegação de páginas é interna ao relatório
+  // e não é refletida na rota do Nexo (o runtime não cria tabs para isso).
+  onSdkMessage(e) {
+    const pub = getPublication(this.state.productId);
+    if (pub.contentType !== "nexo-project") return;
+    const d = e && e.data;
+    if (!d || d.type !== "nexo:route" || typeof d.path !== "string") return;
+    const path = d.path.replace(/^\//, "");
+    if (path === this.state.path) return;
+    history.pushState({ r: path }, "", "#/r/" + this.state.productId + (path ? "/" + path : ""));
+    this.setState({ path: path, syncs: this.state.syncs + 1 });
+  }
+  toggleTech() {
+    this.setState((s) => ({ techOpen: !s.techOpen }));
+  }
+  goToCatalog() {
+    location.hash = "/produtos";
+  }
+  goToSubstitute() {
+    location.hash = "/produtos/visao-geral-2-0";
+  }
+  backToNexo() {
+    let target = null;
+    try { target = sessionStorage.getItem("nexo:returnTo"); } catch (err) { target = null; }
+    location.hash = target || "/produtos/" + this.state.productId;
+  }
+  renderVals() {
+    const st = this.props.state ?? "normal";
+    const scope = this.props.errorScope ?? "produto";
+    const runAllowed = this.props.deprecatedExecutionAllowed ?? true;
+    const productId = this.state.productId;
+    const pub = getPublication(productId);
+    const contentType = this.props.contentTypeOverride || pub.contentType;
+    const isPowerBI = contentType === "power-bi";
+    const runs = st === "normal" || st === "loading" || st === "maintenance" || (st === "deprecated" && runAllowed);
+    const embedState = st === "loading" ? "loading" : st === "maintenance" ? "maintenance" : "loaded";
+    // Fonte de montagem do conteúdo: Projeto Nexo usa o pacote publicado atual
+    // (RuntimeReportEmbedFrame / demo-product.html); Power BI usa a integração
+    // corporativa Power BI Embedded, configurada com workspace/report/defaultPage
+    // persistidos na publicação do produto — nenhum desses identificadores
+    // aparece no header, e a navegação interna das páginas pertence ao relatório.
+    const embedSrc = isPowerBI
+      ? "./demo-powerbi.html?workspace=" + encodeURIComponent(pub.powerBI.workspace) + "&report=" + encodeURIComponent(pub.powerBI.report) + "&page=" + encodeURIComponent(pub.powerBI.defaultPage)
+      : "./demo-product.html";
+
+    let fp = null;
+    if (st === "restricted") {
+      fp = { type: "restricted", eyebrow: "Acesso restrito", title: "Você não tem permissão para executar este produto", description: "Seu CR e FUNCAORM atuais não possuem acesso a este produto. O acesso é definido pelas regras corporativas vigentes em Hominum.", code: "NEXO-403", codeVisible: false, supporting: "Produto " + productId + " · política de acesso: perfil restrito", technical: "NEXO-403 · policy=data-scope:restricted", technicalVisible: this.state.techOpen, toggle: true, primary: true };
+    } else if (st === "archived") {
+      const hasSubstitute = true;
+      fp = { type: "archived", eyebrow: "Produto arquivado", title: "Este produto não está mais disponível para execução", description: "O registro permanece disponível para histórico e rastreabilidade.", code: "NEXO-410", codeVisible: false, supporting: "Arquivado em 12/03/2026 · último owner: Data Platform", technical: "NEXO-410 · registry=known; lifecycle=archived", technicalVisible: this.state.techOpen, toggle: true, primary: true, primaryLabel: hasSubstitute ? "Ver produto substituto" : "Voltar ao catálogo", showSecondary: hasSubstitute, onPrimary: hasSubstitute ? () => this.goToSubstitute() : () => this.goToCatalog(), onSecondary: () => this.goToCatalog() };
+    } else if (st === "deprecated" && !runAllowed) {
+      fp = { type: "forbidden", eyebrow: "Produto descontinuado", title: "A execução deste produto foi encerrada", description: "O prazo da regra de depreciação venceu e o runtime foi desligado. Use o produto substituto indicado no catálogo.", code: "NEXO-409", supporting: "Depreciado em 30/09/2026 · substituto: Visão Geral 2.0", technical: "lifecycle=deprecated; grace-period=expired", technicalVisible: false, primary: false };
+    } else if (st === "error" && scope === "nexo") {
+      fp = { type: "error", eyebrow: "Falha do Nexo", title: "O Nexo não conseguiu montar o runtime deste produto", description: "A falha está na camada do portal — resolução de rota, sessão ou entrega do embed. O produto não foi acionado.", code: "NEXO-500", codeVisible: false, supporting: "Camada: host de runtime do Nexo · nenhuma requisição chegou ao produto", technical: isPowerBI ? "NEXO-500 · stage=host-bootstrap; integration=power-bi-embedded; embed-token=expired; trace=nexo-7f31c9" : "NEXO-500 · stage=host-bootstrap; integration=nexo-project; embed-token=expired; trace=nexo-7f31c9", technicalVisible: this.state.techOpen, toggle: true, primary: true };
+    } else if (st === "error") {
+      fp = isPowerBI
+        ? { type: "error", eyebrow: "Falha do produto", title: "O produto retornou um erro durante a execução", description: "O Nexo carregou o runtime normalmente; a falha ocorreu na integração Power BI Embedded.", code: "PROD-502", codeVisible: false, supporting: "Camada: produto " + productId + " · owner: Data Platform", technical: "PROD-502 · stage=powerbi-embed-render · sdk=powerbi-client@2.23 · workspace=" + pub.powerBI.workspace + " · report=" + pub.powerBI.report + " · trace=prod-9ac412", technicalVisible: this.state.techOpen, toggle: true, primary: true }
+        : { type: "error", eyebrow: "Falha do produto", title: "O produto retornou um erro durante a execução", description: "O Nexo carregou o runtime normalmente; a falha ocorreu dentro do produto.", code: "PROD-502", codeVisible: false, supporting: "Camada: produto " + productId + " · owner: Data Platform", technical: "PROD-502 · stage=report-render · sdk=report-embed@4.2 · trace=prod-9ac412 · request-id=req-7d21f0", technicalVisible: this.state.techOpen, toggle: true, primary: true };
+    }
+
+    return {
+      shellProps: { style: { width: "100%", height: "100dvh", minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "var(--color-surface-card)" } },
+      headerProps: { style: { width: "100%", height: 46, minHeight: 46, padding: "0px 16px", border: "0", borderBottom: "1px solid var(--color-border-default)", boxShadow: "none", backgroundColor: "var(--color-surface-card)", flexShrink: 0 } },
+      bannerProps: { style: { width: "100%", height: "auto", minHeight: 44, flexShrink: 0 } },
+      frameProps: { style: { width: "100%", maxWidth: "none", height: "100%", minWidth: 0, minHeight: 0, padding: "0px", borderRadius: 0, backgroundColor: "transparent", justifyContent: "center", alignItems: "center" } },
+      fullPageProps: { style: { width: "100%", maxWidth: "none", height: "100%", minWidth: 0, minHeight: 0 } },
+      showBanner: st === "deprecated" && runAllowed,
+      bannerMessage: "Este produto será descontinuado em 30/09/2026. Migre para o produto substituto antes dessa data.",
+      useBareEmbed: runs && embedState === "loaded",
+      embedSrc: embedSrc,
+      useStateFrame: runs && embedState !== "loaded",
+      embedState: embedState,
+      maintenanceWindow: st === "maintenance" ? "Previsão de retorno: 18/05 às 04:00." : undefined,
+      productSurfaceLabel: st === "loading" ? "Inicializando produto…" : undefined,
+      useFullPage: !!fp,
+      fpType: fp ? fp.type : "error",
+      fpTitle: fp ? fp.title : "",
+      fpDescription: fp ? fp.description : "",
+      fpEyebrow: fp ? fp.eyebrow : "",
+      fpCode: fp ? fp.code : "",
+      fpCodeVisible: fp ? (fp.codeVisible ?? true) : true,
+      fpSupporting: fp ? fp.supporting : "",
+      fpTechnical: fp ? fp.technical : "",
+      fpTechnicalVisible: fp ? fp.technicalVisible : false,
+      fpTechToggle: fp && fp.toggle ? () => this.toggleTech() : undefined,
+      fpPrimary: fp ? fp.primary : false,
+      fpPrimaryLabel: fp ? fp.primaryLabel : undefined,
+      fpSecondaryVisible: fp ? (fp.showSecondary ?? true) : true,
+      fpOnPrimary: fp && fp.onPrimary ? fp.onPrimary : () => this.setState({ syncs: this.state.syncs + 1 }),
+      fpOnSecondary: fp && fp.onSecondary ? fp.onSecondary : () => this.backToNexo(),
+      onPrimary: () => this.setState({ syncs: this.state.syncs + 1 }),
+      onBackToNexo: () => this.backToNexo(),
+    };
+  }
+}
+</script>
+</body>
+</html>

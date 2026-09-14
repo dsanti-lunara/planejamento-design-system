@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Portal Home" description="Official Nexo home: hero, destaques, catálogo, comunicados, publicados recentemente — navigates out to templates/catalogo, templates/detalhe-produto and templates/admin-produtos" -->
+<helmet><script src="./ds-base.js"></script><script src="./image-slot.js"></script></helmet>
+<div style="width:100%;height:100vh;overflow:hidden;background:var(--color-surface-canvas);display:flex;flex-direction:row;align-items:stretch;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<div style="display:grid;grid-template-rows:minmax(0,1fr) auto;flex-shrink:0;height:100%;overflow:hidden;background:var(--color-surface-sidebar);box-shadow:inset 0 0 0 1px var(--color-border-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavSidebar" items="{{ sidebarItems }}" logo="{{ sidebarLogo }}" collapsed="{{ sidebarCollapsed }}" onToggleCollapsed="{{ toggleSidebarCollapsed }}" show-back-to-portal="{{ false }}" show-utility="{{ false }}" bordered="{{ false }}" style="height:100%" hint-size="222px,auto"></x-import>
+<div onclick="{{ handleLogout }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:12px 12px 12px 16px;margin:0 12px 12px;border-radius:8px;cursor:pointer;box-sizing:border-box;flex-shrink:0" style-hover="background:var(--color-action-hover)">
+<span style="font-family:Inter,sans-serif;font-weight:500;font-size:14px;color:var(--color-text-secondary)">{{ logoutLabel }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-start;flex-grow:1;height:100%;overflow:auto;min-width:0">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavTopbar" variant="portal" breadcrumb="{{ false }}" notifications="{{ true }}" user="{{ topbarUser }}" style="flex-shrink:0;width:100%" hint-size="100%,56px"></x-import>
+<div style="display:flex;flex-direction:column;gap:18px;padding:28px;align-items:flex-start;box-sizing:border-box;flex-grow:1;align-self:stretch;width:100%">
+<div style="display:flex;flex-direction:column;gap:4px;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.NavigationBreadcrumb" path="short" icon1="{{ homeCrumbIcon1 }}" icon2="{{ homeCrumbSpacer }}" icon3="{{ homeCrumbSpacer }}" style="width:auto" hint-size="60px,24px"></x-import>
+</div>
+
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:24px;width:100%;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:16px;flex:1 1 480px;min-width:300px">
+
+<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:24px;width:100%;align-items:center;background:var(--color-surface-subtle);border-radius:16px;padding:24px;box-sizing:border-box;box-shadow:inset 0 0 0 1px var(--color-border-subtle);min-height:185px;overflow:hidden">
+<div style="display:flex;flex-direction:column;gap:8px;flex:0 1 380px;min-width:300px;max-width:400px">
+<span style="width:32px;height:32px;display:flex;flex-shrink:0">{{ heroLogo }}</span>
+<h2 style="margin:0;font-size:22px;font-weight:700;color:var(--color-text-primary)">Bem-vindo ao Nexo</h2>
+<p style="margin:0;font-size:13px;line-height:18px;color:var(--color-text-secondary)">Seu portal para explorar, acessar e compartilhar análises confiáveis que impulsionam decisões melhores.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><x-import component-from-global-scope="DesignSystem_25dd5c.Button" label="Explorar catálogo" style2="secondary" size="default" showLeadingIcon="{{ true }}" leadingIcon="{{ searchIcon }}" onClick="{{ goCatalogRoot }}" hint-size="180px,40px"></x-import></div>
+</div>
+<div style="flex:1 1 auto;height:158px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;padding-left:20px">
+<img src="../../assets/illustrations/hero-analytics.png" alt="Ilustração de analytics do Nexo" style="height:158px;width:auto;max-width:100%;object-fit:contain;transform:translateX(20px)"/>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;width:100%">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+<span style="font-size:16px;font-weight:600;color:var(--color-text-primary)">Destaques</span>
+<span style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--color-action-primary);font-weight:500">Ver todos os destaques <span style="width:14px;height:14px;display:flex">{{ chevronIcon }}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:18px;width:100%;align-items:stretch">
+<sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
+<div onclick="{{ p.onClick }}" style="cursor:pointer;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductCard" context="featured" name="{{ p.name }}" description="{{ p.description }}" productLogo="{{ p.productLogo }}" showTags="{{ false }}" showCategory="{{ true }}" category="{{ p.categoryKey }}" showCTA="{{ false }}" style="width:100%" hint-size="100%,250px"></x-import>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;width:100%">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+<span style="font-size:16px;font-weight:600;color:var(--color-text-primary)">Explore o catálogo</span>
+<span onclick="{{ goCatalogRoot }}" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--color-action-primary);font-weight:500">Ver todos os produtos <span style="width:14px;height:14px;display:flex">{{ chevronIcon }}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:16px;width:100%">
+<sc-for list="{{ categories }}" as="c" hint-placeholder-count="7">
+<div onclick="{{ c.onClick }}" style="cursor:pointer;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeCategoryTile" label="{{ c.label }}" count="{{ c.count }}" icon="{{ c.icon }}" style="width:100%" hint-size="100%,78px"></x-import>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;width:100%">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+<span style="font-size:16px;font-weight:600;color:var(--color-text-primary)">Acesso com frequência</span>
+<span style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--color-action-primary);font-weight:500">Ver todos <span style="width:14px;height:14px;display:flex">{{ chevronIcon }}</span></span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;width:100%">
+<sc-for list="{{ frequent }}" as="p" hint-placeholder-count="3">
+<div onclick="{{ p.onClick }}" style="cursor:pointer;width:100%">
+<x-import component-from-global-scope="DesignSystem_25dd5c.ProductCard" context="compact" name="{{ p.name }}" productLogo="{{ p.productLogo }}" showSecondaryInfo="{{ true }}" secondaryInfo="{{ p.description }}" style="width:100%" hint-size="100%,64px"></x-import>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border-top:1px solid var(--color-border-subtle)">
+<span style="width:16px;height:16px;display:flex;color:var(--color-text-muted)">{{ bellIcon }}</span>
+<span style="font-size:13px;color:var(--color-text-secondary)">Não encontrou o que procura?</span>
+<span style="font-size:13px;color:var(--color-action-primary);font-weight:600;cursor:pointer" style-hover="text-decoration:underline">Solicitar novo produto ›</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;flex:0 1 clamp(300px,20vw,328px);min-width:296px;max-width:328px;align-self:flex-start">
+<div style="display:flex;flex-direction:column;gap:12px;width:100%">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+<span style="font-size:16px;font-weight:600;color:var(--color-text-primary)">Comunicados</span>
+<span style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--color-action-primary);font-weight:500">Ver todos <span style="width:14px;height:14px;display:flex">{{ chevronIcon }}</span></span>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeAnnouncementItem" title="Novo relatório: Análise de Churn" type="info" description="Entenda os principais indicadores de churn e retenção de clientes." showDate="{{ true }}" date="Publicado em 15/05/2025" style="width:100%" hint-size="100%,112px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.HomeAnnouncementItem" title="Manutenção programada" type="maintenance" description="No dia 18/05 (domingo) das 00:00 às 04:00." showDate="{{ true }}" date="Publicado em 13/05/2025" style="width:100%" hint-size="100%,112px"></x-import>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;width:100%">
+<div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+<span style="font-size:16px;font-weight:600;color:var(--color-text-primary)">Publicados recentemente</span>
+<span style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--color-action-primary);font-weight:500">Ver todos <span style="width:14px;height:14px;display:flex">{{ chevronIcon }}</span></span>
+</div>
+<div style="display:flex;flex-direction:column;width:100%">
+<sc-for list="{{ recent }}" as="p" hint-placeholder-count="3">
+<div onclick="{{ p.onClick }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:9px 2px;border-bottom:1px solid var(--color-border-subtle);cursor:pointer;box-sizing:border-box" style-hover="background:var(--color-surface-subtle)">
+<x-import component-from-global-scope="DesignSystem_25dd5c.BrandProductLogoTile" size="sm" shape="rounded" background="subtle" fallback="{{ p.initials }}" hint-size="32px,32px"></x-import>
+<div style="display:flex;flex-direction:column;gap:2px;flex-grow:1;min-width:0">
+<span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">{{ p.title }}</span>
+<span style="font-size:11px;color:var(--color-text-secondary)">{{ p.name }}</span>
+<span style="font-size:11px;color:var(--color-text-muted)">{{ p.time }}</span>
+</div>
+<x-import component-from-global-scope="DesignSystem_25dd5c.TagCategoryChip" label="{{ p.categoryLabel }}" category="{{ p.categoryKey }}" style="flex-shrink:0;padding:3px 8px" hint-size="80px,20px"></x-import>
+<x-import component-from-global-scope="DesignSystem_25dd5c.ActionFavorite" size="sm" state="not favorite" hint-size="28px,28px"></x-import>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showAdmin&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sidebar&quot;}}">
+class Component extends DCLogic {
+  state = { sidebarCollapsed: false };
+
+  categoriesData = [
+    { key: 'todos', label: 'Todos os produtos', count: '128 produtos', iconName: 'IconNavPortal' },
+    { key: 'operacional', label: 'Operacional', count: '32 produtos', iconName: 'IconNavIntraday' },
+    { key: 'planejamento', label: 'Planejamento', count: '28 produtos', iconName: 'IconCalendar' },
+    { key: 'financeiro', label: 'Financeiro', count: '22 produtos', iconName: 'IconNavFinance' },
+    { key: 'gestão', label: 'Gestão', count: '18 produtos', iconName: 'IconNavCapacity' },
+    { key: 'clientes', label: 'Clientes', count: '14 produtos', iconName: 'IconNavDemand' },
+    { key: 'dados & inteligência', label: 'Dados & Inteligência', count: '14 produtos', iconName: 'IconDataState' },
+  ];
+
+  productsData = [
+    { name: 'Claro Brasil', categoryKey: 'operacional', description: 'Visão integrada de operação, receita e desempenho comercial.', initials: 'CB' },
+    { name: 'Sentinel', categoryKey: 'operacional', description: 'Monitoramento de rede, incidentes e qualidade de serviço.', initials: 'SN' },
+    { name: 'Banco de Horas', categoryKey: 'gestão', description: 'Acompanhamento de saldo, utilizações e previsões da equipe.', initials: 'BH' },
+    { name: 'Planejamento Orçamentário', categoryKey: 'planejamento', description: 'Planeje cenários, metas e orçamento de forma colaborativa.', initials: 'PO' },
+    { name: 'Forecast de Demanda', categoryKey: 'planejamento', description: 'Projeções de volume e dimensionamento por canal.', initials: 'FD' },
+    { name: 'Painel de Clientes', categoryKey: 'clientes', description: 'Satisfação, churn e jornada dos principais contratos.', initials: 'PC' },
+    { name: 'Qualidade de Dados', categoryKey: 'dados & inteligência', description: 'Monitoramento de qualidade e versões dos datasets.', initials: 'QD' },
+    { name: 'Indicadores Financeiros', categoryKey: 'financeiro', description: 'Receita, custo e margem consolidados por unidade.', initials: 'IF' },
+  ];
+
+  recentData = [
+    { title: 'Painel de Vendas Diárias', name: 'Claro Brasil', categoryKey: 'operacional', time: 'Publicado há 2 horas', initials: 'CB' },
+    { title: 'Relatório de Qualidade de Rede', name: 'Sentinel', categoryKey: 'operacional', time: 'Publicado há 5 horas', initials: 'SN' },
+    { title: 'Forecast de Banco de Horas', name: 'Banco de Horas', categoryKey: 'gestão', time: 'Publicado há 1 dia', initials: 'BH' },
+  ];
+
+  icon(name) {
+    const ns = window.DesignSystem_25dd5c || {};
+    const Cmp = ns[name];
+    return Cmp ? React.createElement(Cmp) : null;
+  }
+
+  productLogo(initials) {
+    const ns = window.DesignSystem_25dd5c || {};
+    const Cmp = ns.BrandProductLogoTile;
+    return Cmp ? React.createElement(Cmp, { fallback: initials, size: 'md', shape: 'rounded', background: 'brand' }) : null;
+  }
+
+  navigateToCatalog = (categoryKey) => { window.location.href = '../catalogo/Catalogo.dc.html' + (categoryKey ? ('?categoria=' + encodeURIComponent(categoryKey)) : ''); };
+  navigateToProduct = (p) => { window.location.href = '../detalhe-produto/DetalheProduto.dc.html?produto=' + encodeURIComponent(p.name); };
+  navigateToAdmin = () => { window.location.href = '../admin-produtos/AdminProdutos.dc.html'; };
+  goCatalogRoot = () => this.navigateToCatalog(null);
+  toggleSidebarCollapsed = () => this.setState(s => ({ sidebarCollapsed: !s.sidebarCollapsed }));
+  handleLogout = () => { window.location.href = '../login-flow/LoginFlow.dc.html'; };
+
+  renderVals() {
+    const { sidebarCollapsed } = this.state;
+    const showAdmin = this.props.showAdmin ?? true;
+    const catLabel = (key) => (this.categoriesData.find(c => c.key === key) || {}).label;
+
+    const categories = this.categoriesData.map(c => ({
+      label: c.label, count: c.count, icon: this.icon(c.iconName),
+      onClick: () => this.navigateToCatalog(c.key === 'todos' ? null : c.key),
+    }));
+
+    const withClick = (p) => ({ ...p, categoryLabel: catLabel(p.categoryKey), productLogo: this.productLogo(p.initials), onClick: () => this.navigateToProduct(p) });
+    const recent = this.recentData.map(r => ({ ...r, categoryLabel: catLabel(r.categoryKey), onClick: () => this.navigateToProduct({ name: r.name, categoryKey: r.categoryKey }) }));
+
+    return {
+      homeCrumbIcon1: React.createElement(window.DesignSystem_25dd5c.NavigationBreadcrumbItem, { label: 'Início', state: 'current' }),
+      homeCrumbSpacer: React.createElement('span', { style: { display: 'none' } }),
+      chevronIcon: this.icon('IconChevronRight'),
+      searchIcon: this.icon('IconSearch'),
+      bellIcon: this.icon('IconBell'),
+      topbarUser: { name: 'Ana Ferreira', role: 'Planejamento Analytics' },
+      goCatalogRoot: this.goCatalogRoot,
+      categories,
+      featured: this.productsData.slice(0, 4).map(withClick),
+      frequent: this.productsData.slice(4, 7).map(withClick),
+      recent,
+      sidebarCollapsed,
+      toggleSidebarCollapsed: this.toggleSidebarCollapsed,
+      handleLogout: this.handleLogout,
+      logoutLabel: sidebarCollapsed ? '⏻' : 'Sair',
+      sidebarLogo: sidebarCollapsed ? React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain', flexShrink: 0 } }) : React.createElement('img', { src: '../../assets/logos/nexo-logo-completa.svg', alt: 'Nexo', style: { display: 'block', height: 40, width: 'auto', objectFit: 'contain', flexShrink: 0 } }),
+      heroLogo: React.createElement('img', { src: '../../assets/logos/nexo-icon.svg', alt: 'Nexo', style: { display: 'block', width: 32, height: 32, objectFit: 'contain' } }),
+      sidebarItems: [
+        { label: 'Início', icon: this.icon('IconNavHome'), active: true },
+        { section: 'CATÁLOGO' },
+        ...this.categoriesData.map(c => ({
+          label: c.label, icon: this.icon(c.iconName),
+          onClick: () => this.navigateToCatalog(c.key === 'todos' ? null : c.key),
+        })),
+        ...(showAdmin ? [{ section: 'ADMINISTRAÇÃO', divider: true }, { label: 'Administração', icon: this.icon('IconNavGovernance'), onClick: this.navigateToAdmin }] : []),
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

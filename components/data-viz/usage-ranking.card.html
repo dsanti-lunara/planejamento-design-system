@@ -1,0 +1,15 @@
+<!-- @dsCard group="Components" viewport="700x260" name="Usage Ranking" subtitle="Usage/Ranking Bar List + Item" -->
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<div id="root" style="padding:16px;background:var(--surface-canvas)"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<script type="text/babel">
+const { UsageRankingBarList } = window.DesignSystem_25dd5c;
+ReactDOM.createRoot(document.getElementById('root')).render(<UsageRankingBarList items={[
+  { rank: "1", label: "Claro Brasil", value: "8.492 acessos", percentage: "38%" },
+  { rank: "2", label: "Claro Móvel", value: "5.120 acessos", percentage: "23%", state: "highlighted" },
+  { rank: "3", label: "Estrutura", value: "3.014 acessos", percentage: "14%" },
+]}/>);
+</script>
